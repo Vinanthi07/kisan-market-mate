@@ -10,33 +10,73 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BuyersRouteImport } from './routes/buyers'
+import { Route as LearnRouteImport } from './routes/learn'
+import { Route as SellRouteImport } from './routes/sell'
+import { Route as SowRouteImport } from './routes/sow'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyersRoute = BuyersRouteImport.update({
+  id: '/buyers',
+  path: '/buyers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearnRoute = LearnRouteImport.update({
+  id: '/learn',
+  path: '/learn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SellRoute = SellRouteImport.update({
+  id: '/sell',
+  path: '/sell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SowRoute = SowRouteImport.update({
+  id: '/sow',
+  path: '/sow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/buyers': typeof BuyersRoute
+  '/learn': typeof LearnRoute
+  '/sell': typeof SellRoute
+  '/sow': typeof SowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/buyers': typeof BuyersRoute
+  '/learn': typeof LearnRoute
+  '/sell': typeof SellRoute
+  '/sow': typeof SowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/buyers': typeof BuyersRoute
+  '/learn': typeof LearnRoute
+  '/sell': typeof SellRoute
+  '/sow': typeof SowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/buyers' | '/learn' | '/sell' | '/sow'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/buyers' | '/learn' | '/sell' | '/sow'
+  id: '__root__' | '/' | '/buyers' | '/learn' | '/sell' | '/sow'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BuyersRoute: typeof BuyersRoute
+  LearnRoute: typeof LearnRoute
+  SellRoute: typeof SellRoute
+  SowRoute: typeof SowRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +88,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyers': {
+      id: '/buyers'
+      path: '/buyers'
+      fullPath: '/buyers'
+      preLoaderRoute: typeof BuyersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learn': {
+      id: '/learn'
+      path: '/learn'
+      fullPath: '/learn'
+      preLoaderRoute: typeof LearnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sell': {
+      id: '/sell'
+      path: '/sell'
+      fullPath: '/sell'
+      preLoaderRoute: typeof SellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sow': {
+      id: '/sow'
+      path: '/sow'
+      fullPath: '/sow'
+      preLoaderRoute: typeof SowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BuyersRoute: BuyersRoute,
+  LearnRoute: LearnRoute,
+  SellRoute: SellRoute,
+  SowRoute: SowRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
