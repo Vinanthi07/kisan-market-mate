@@ -34,7 +34,7 @@ function Onboarding() {
     () => setGpsFail(true), { timeout: 10000 });
 
   const pick = () => {
-    const [lat, lng] = STATES[state][district];
+    const [lat, lng] = STATES[state]?.[district] ?? [13.14, 78.13];
     set({ loc: { lat, lng, state, district, village } }); setStep(2);
   };
 
@@ -67,12 +67,12 @@ function Onboarding() {
         <button className={big} onClick={gps}><LocateFixed className="size-7" />{t.useGps}</button>
         {gpsFail && <p role="alert" className="rounded-lg bg-muted p-3 text-lg">{t.gpsFail}</p>}
         <label className="grid gap-1 text-lg font-semibold">{t.state}
-          <select className={sel} value={state} onChange={(e) => { setState(e.target.value); setDistrict(Object.keys(STATES[e.target.value])[0]); }}>
+          <select className={sel} value={state} onChange={(e) => { setState(e.target.value); setDistrict(Object.keys(STATES[e.target.value] ?? {})[0] ?? ""); }}>
             {Object.keys(STATES).map((x) => <option key={x}>{x}</option>)}
           </select></label>
         <label className="grid gap-1 text-lg font-semibold">{t.district}
           <select className={sel} value={district} onChange={(e) => setDistrict(e.target.value)}>
-            {Object.keys(STATES[state]).map((x) => <option key={x}>{x}</option>)}
+            {Object.keys(STATES[state] ?? {}).map((x) => <option key={x}>{x}</option>)}
           </select></label>
         <label className="grid gap-1 text-lg font-semibold">{t.village}
           <input className={sel} value={village} onChange={(e) => setVillage(e.target.value)} /></label>

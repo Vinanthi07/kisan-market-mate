@@ -26,7 +26,7 @@ export interface Ranked {
 export function rankMarkets(crop: Crop, qty: number, loc: [number, number], rate: number, maxKm = 450): Ranked[] {
   const rows = MARKETS.map((m) => {
     const series = priceSeries(crop, m);
-    const price = series[series.length - 1];
+    const price = series[series.length - 1] ?? 0;
     const distanceKm = m.fixedKm ?? roadKm(loc, [m.lat, m.lng]);
     return { market: m, price, distanceKm, series, ...netBreakdown({ price, distanceKm, rate, feePct: m.feePct, spoilPer100km: crop.spoilPer100km }) };
   }).filter((r) => r.distanceKm <= maxKm);

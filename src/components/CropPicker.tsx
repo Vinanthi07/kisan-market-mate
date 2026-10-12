@@ -16,7 +16,7 @@ export function CropPicker({ value, onChange, grid = false }: { value: CropId; o
     if (!r) return;
     setListening(true);
     r.onresult = (e) => {
-      const said = e.results[0][0].transcript.toLowerCase();
+      const said = (e.results[0]?.[0]?.transcript ?? "").toLowerCase();
       const hit = CROPS.find((c) => Object.values(DICTS).some((d) => said.includes(d[c.id].toLowerCase())));
       if (hit) onChange(hit.id);
     };
