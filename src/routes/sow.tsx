@@ -32,7 +32,7 @@ function Sow() {
   const max = Math.max(...rows.map((r) => Math.abs(r.profit)));
   return (
     <Page>
-      <main className="grid gap-3">
+      <main className="grid grid-cols-[minmax(0,1fr)] gap-3">
         <h1 className="flex items-center gap-2 font-display text-2xl font-bold"><Sprout className="size-7 text-primary" />{t.sowTitle}</h1>
         <ListenButton text={rows.slice(0, 3).map((r) => `${t[r.c.id]} ${Math.round(r.profit)}`).join(". ")} />
         {rows.map(({ c, profit }) => (

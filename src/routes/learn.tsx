@@ -25,7 +25,7 @@ function Learn() {
   ];
   return (
     <Page>
-      <main className="grid gap-4">
+      <main className="grid grid-cols-[minmax(0,1fr)] gap-4">
         {cards.map(({ I, title, body, pilot }) => (
           <article key={title} className="overflow-hidden rounded-2xl border bg-card">
             <div className="flex h-36 items-center justify-center bg-primary/10"><I className="size-24 text-primary" aria-hidden /></div>

@@ -54,10 +54,10 @@ function Sell() {
 
   return (
     <Page>
-      <main className="grid gap-4">
+      <main className="grid grid-cols-[minmax(0,1fr)] gap-4">
         <CropPicker value={s.crop} onChange={(c) => { set({ crop: c }); setSel(null); }} />
 
-        <div className="flex items-center gap-2 rounded-2xl border bg-card p-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-3">
           <Coins className="size-7 text-primary" aria-hidden />
           <span className="text-lg font-semibold">{t.quantity}</span>
           <div className="ml-auto flex items-center gap-2">

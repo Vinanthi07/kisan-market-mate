@@ -36,7 +36,7 @@ function Buyers() {
   };
   return (
     <Page>
-      <main className="grid gap-3">
+      <main className="grid grid-cols-[minmax(0,1fr)] gap-3">
         <ul className="grid gap-3">
           {BUYERS.map((b) => (
             <li key={b.id} className="rounded-2xl border bg-card p-3">
