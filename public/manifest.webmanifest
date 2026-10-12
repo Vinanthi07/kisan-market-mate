@@ -1,0 +1,9 @@
+{
+  "name": "KisanMandi",
+  "short_name": "KisanMandi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f3e8",
+  "theme_color": "#2f6b3a",
+  "icons": [{ "src": "/favicon.ico", "sizes": "64x64", "type": "image/x-icon" }]
+}
