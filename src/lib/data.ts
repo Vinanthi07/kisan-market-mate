@@ -44,13 +44,13 @@ export const MARKETS: Market[] = [
 ];
 export const marketName = (m: Market, lang: Lang) => m.names[lang] ?? m.names.en;
 
-export const STATES: Record<string, Record<string, [number, number]>> = {
+export const STATES = {
   Karnataka: { Kolar: [13.14, 78.13], "Bengaluru Rural": [13.28, 77.53], Mysuru: [12.3, 76.64], Dharwad: [15.46, 75.0] },
   "Tamil Nadu": { Krishnagiri: [12.52, 78.21], Dindigul: [10.36, 77.98], Coimbatore: [11.02, 76.96], Chennai: [13.08, 80.27] },
   Maharashtra: { Nashik: [20.0, 73.79], Pune: [18.52, 73.86], Solapur: [17.66, 75.91], Ahmednagar: [19.09, 74.74] },
   "Andhra Pradesh": { Chittoor: [13.22, 79.1], Kurnool: [15.83, 78.04], Guntur: [16.3, 80.44] },
   Telangana: { Hyderabad: [17.38, 78.48], Rangareddy: [17.23, 78.27], Warangal: [17.97, 79.59] },
-};
+} as Record<string, Record<string, [number, number]>>;
 
 function hash(s: string) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
 
