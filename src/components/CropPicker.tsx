@@ -27,10 +27,10 @@ export function CropPicker({ value, onChange, grid = false }: { value: CropId; o
 
   return (
     <div>
-      <div className={grid ? "grid grid-cols-3 gap-2" : "flex gap-2 overflow-x-auto pb-1"} role="radiogroup" aria-label={t.chooseCrop}>
+      <div className={grid ? "grid grid-cols-3 gap-2 [&>button]:w-auto" : "flex gap-2 overflow-x-auto pb-1"} role="radiogroup" aria-label={t.chooseCrop}>
         {CROPS.map((c) => (
           <button key={c.id} role="radio" aria-checked={value === c.id} onClick={() => onChange(c.id)}
-            className={`flex min-w-24 flex-col items-center gap-1 rounded-2xl border-2 p-2 text-base font-semibold ${value === c.id ? "border-primary bg-primary/10" : "border-border bg-card"}`}>
+            className={`flex w-28 shrink-0 flex-col items-center gap-1 rounded-2xl border-2 p-2 text-center text-base font-semibold leading-tight break-words ${value === c.id ? "border-primary bg-primary/10" : "border-border bg-card"}`}>
             <CropArt id={c.id} size={grid ? 72 : 52} />
             <span>{t[c.id]}</span>
           </button>
