@@ -1,0 +1,17 @@
+{
+  "name": "KisanSaathi — Right Market. Right Time. Better Income.",
+  "short_name": "KisanSaathi",
+  "description": "Mobile-first agricultural decision support: Mandi prices, best market finder, profit calculator, transport pooling and research-backed storage.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f8f5ee",
+  "theme_color": "#166534",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
