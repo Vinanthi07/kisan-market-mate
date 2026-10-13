@@ -19,6 +19,7 @@ import { Route as LantanaGuardRouteImport } from './routes/lantana-guard'
 import { Route as LearnRouteImport } from './routes/learn'
 import { Route as MandiPricesRouteImport } from './routes/mandi-prices'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as QualityInspectionRouteImport } from './routes/quality-inspection'
 import { Route as SellRouteImport } from './routes/sell'
 import { Route as SowRouteImport } from './routes/sow'
 import { Route as TransportRouteImport } from './routes/transport'
@@ -77,6 +78,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QualityInspectionRoute = QualityInspectionRouteImport.update({
+  id: '/quality-inspection',
+  path: '/quality-inspection',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SellRoute = SellRouteImport.update({
   id: '/sell',
   path: '/sell',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/learn': typeof LearnRoute
   '/mandi-prices': typeof MandiPricesRoute
   '/profile': typeof ProfileRoute
+  '/quality-inspection': typeof QualityInspectionRoute
   '/sell': typeof SellRoute
   '/sow': typeof SowRoute
   '/transport': typeof TransportRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/learn': typeof LearnRoute
   '/mandi-prices': typeof MandiPricesRoute
   '/profile': typeof ProfileRoute
+  '/quality-inspection': typeof QualityInspectionRoute
   '/sell': typeof SellRoute
   '/sow': typeof SowRoute
   '/transport': typeof TransportRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/learn': typeof LearnRoute
   '/mandi-prices': typeof MandiPricesRoute
   '/profile': typeof ProfileRoute
+  '/quality-inspection': typeof QualityInspectionRoute
   '/sell': typeof SellRoute
   '/sow': typeof SowRoute
   '/transport': typeof TransportRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/mandi-prices'
     | '/profile'
+    | '/quality-inspection'
     | '/sell'
     | '/sow'
     | '/transport'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/mandi-prices'
     | '/profile'
+    | '/quality-inspection'
     | '/sell'
     | '/sow'
     | '/transport'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/mandi-prices'
     | '/profile'
+    | '/quality-inspection'
     | '/sell'
     | '/sow'
     | '/transport'
@@ -242,6 +254,7 @@ export interface RootRouteChildren {
   LearnRoute: typeof LearnRoute
   MandiPricesRoute: typeof MandiPricesRoute
   ProfileRoute: typeof ProfileRoute
+  QualityInspectionRoute: typeof QualityInspectionRoute
   SellRoute: typeof SellRoute
   SowRoute: typeof SowRoute
   TransportRoute: typeof TransportRoute
@@ -323,6 +336,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/quality-inspection': {
+      id: '/quality-inspection'
+      path: '/quality-inspection'
+      fullPath: '/quality-inspection'
+      preLoaderRoute: typeof QualityInspectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sell': {
       id: '/sell'
       path: '/sell'
@@ -386,6 +406,7 @@ const rootRouteChildren: RootRouteChildren = {
   LearnRoute: LearnRoute,
   MandiPricesRoute: MandiPricesRoute,
   ProfileRoute: ProfileRoute,
+  QualityInspectionRoute: QualityInspectionRoute,
   SellRoute: SellRoute,
   SowRoute: SowRoute,
   TransportRoute: TransportRoute,

@@ -24,6 +24,7 @@ export interface Settings {
   theme: "light" | "dark";
   farmerName: string;
   farmerPhone: string;
+  dataGovApiKey: string;
 }
 
 const DEFAULTS: Settings = {
@@ -45,6 +46,7 @@ const DEFAULTS: Settings = {
   theme: "light",
   farmerName: "Kisan Bandhu",
   farmerPhone: "",
+  dataGovApiKey: "",
 };
 
 const KEY = "kisansaathi.settings";

@@ -2,6 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   BookOpen,
   Calculator,
+  Camera,
   Compass,
   FileText,
   GraduationCap,
@@ -242,6 +243,12 @@ export function TopBar() {
                   icon: Store,
                   label: t.mandiPrices || "KisanMandi Prices",
                   desc: t.liveApmcRates || "Live APMC modal rates",
+                },
+                {
+                  to: "/quality-inspection",
+                  icon: Camera,
+                  label: t.cropQualityInspection,
+                  desc: t.cropQualityIntro,
                 },
                 {
                   to: "/best-market",

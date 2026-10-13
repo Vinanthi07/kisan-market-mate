@@ -30,7 +30,7 @@ KisanSaathi provides 13 dedicated, accessible modules:
 | `/mandi-prices`  | **KisanMandi — Mandi Prices**          | Searchable APMC mandi prices, filter by crop, state, district, arrival date, min/max/modal prices, data freshness, and Agmarknet disclosures.                                      |
 | `/best-market`   | **Best Market Finder**                 | Core multi-market comparison engine ranking nearby APMCs by estimated net proceeds after deducting transport, mandi fees, loading, packaging, and custom expenses.                 |
 | `/when-to-sell`  | **When to Sell Decision Support**      | 3-day and 7-day moving price averages, perishability risk guards, farmer cash flow checks, and transparent sell-now-vs-wait advisory.                                              |
-| `/trends`        | **Price Trends & Crop Planning**       | 15/30/60-day interactive Recharts modal price curves, multi-market comparison, and cautious seasonal planning worksheet with sensitivity analysis.                                 |
+| `/trends`        | **Price Trends & Crop Planning**       | Actual dated APMC observations from the one-year historical window, recent seven-day prices, latest available arrivals, retrieval freshness, market comparison, and cautious crop planning. Historical observations require a valid Data.gov.in API key; demo values are never presented as actual history. |
 | `/calculator`    | **Farming Profit Calculator**          | Comprehensive cultivation economics engine, seed/fertilizer/labor/irrigation cost breakdowns, break-even selling price, and scenario persistence.                                  |
 | `/buyers`        | **Direct Buyer Marketplace**           | Verified direct buyer listings (FPOs, retail aggregators, processing units), farmer produce listing form with local image previews and phone privacy toggle.                       |
 | `/fertilizer`    | **Organic Fertilizer Marketplace**     | Vermicompost, jeevamrutha, and aged farmyard manure listings with feedstock and batch date disclosures; educational composting preparation guide.                                  |
@@ -105,7 +105,7 @@ The application prominently displays the following warning banner on all relevan
 - **Routing & Server Engine**: TanStack Start & TanStack Router (file-based routing with automatic types)
 - **Styling**: Tailwind CSS v4 & Lucide React Icons
 - **Data Visualizations**: Recharts for 60-day interactive price curves
-- **Geographic Mapping**: Leaflet & OpenStreetMap for APMC mandi yard locations
+- **Geographic Mapping**: Google Maps embedded map centered on the farm or selected APMC. This no-key embed provides the Google basemap; market selection is shown as controls below the map. Google Maps JavaScript API keys are not needed for this basic embed.
 - **Build Tool**: Vite 8 with Nitro deployment preset
 - **Package Manager**: `pnpm` (v11.1.2)
 - **Testing**: Vitest with React Testing Library

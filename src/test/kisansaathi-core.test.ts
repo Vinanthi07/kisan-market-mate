@@ -7,7 +7,14 @@ import {
   evaluateWhenToSell,
   rankMarketsByNetProceeds,
 } from "@/lib/calc";
-import { cropById, CROPS, getMandiPriceRecords, MARKETS } from "@/lib/data";
+import {
+  buildHistoricalPriceSeries,
+  cropById,
+  CROPS,
+  getMandiPriceRecords,
+  getPriceHistoryWindow,
+  MARKETS,
+} from "@/lib/data";
 import { DICTS, LANGS } from "@/lib/i18n";
 import { assessProcurementQuality, summarizeQualityReviews } from "@/lib/quality";
 
@@ -372,5 +379,17 @@ describe("KisanSaathi Core Formula & Calculation Engine", () => {
     const records = getMandiPriceRecords("tomato");
     expect(records.length).toBeGreaterThan(0);
     expect(records.every((record) => record.isDemo)).toBe(true);
+  });
+
+  it("builds a one-year historical window and recent 7-day history for selected crops and markets", () => {
+    const crop = cropById("tomato");
+    const market = MARKETS.find((item) => item.kind === "mandi")!;
+    const window = getPriceHistoryWindow(new Date("2026-10-13T00:00:00Z"));
+    const history = buildHistoricalPriceSeries(crop, market, new Date("2026-10-13T00:00:00Z"));
+
+    expect(history.length).toBeGreaterThanOrEqual(365);
+    expect(history[0].date).toBe(window.startDate);
+    expect(history[history.length - 1].date).toBe(window.endDate);
+    expect(history.filter((point) => point.isRecentSevenDay).length).toBeLessThanOrEqual(7);
   });
 });

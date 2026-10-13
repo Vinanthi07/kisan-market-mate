@@ -1284,6 +1284,90 @@ export function priceSeries(crop: Crop, m: Market, days = 60): number[] {
   });
 }
 
+export interface MandiPriceHistoryPoint {
+  date: string;
+  minPrice: number;
+  maxPrice: number;
+  modalPrice: number;
+  isRecentSevenDay: boolean;
+}
+
+export interface MandiPriceRangeSummary {
+  startDate: string;
+  endDate: string;
+  recentStartDate: string;
+  recentEndDate: string;
+  latestObservationDate: string;
+  retrievalTimestamp: string;
+}
+
+function toIsoDate(date: Date): string {
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+export function getPriceHistoryWindow(now = new Date()): MandiPriceRangeSummary {
+  const current = new Date(now);
+  current.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(current);
+  endDate.setDate(endDate.getDate() - 7);
+
+  const startDate = new Date(endDate);
+  startDate.setDate(startDate.getDate() - 365);
+
+  const recentStartDate = new Date(current);
+  recentStartDate.setDate(recentStartDate.getDate() - 7);
+
+  const recentEndDate = new Date(current);
+  recentEndDate.setDate(recentEndDate.getDate() - 1);
+
+  return {
+    startDate: toIsoDate(startDate),
+    endDate: toIsoDate(endDate),
+    recentStartDate: toIsoDate(recentStartDate),
+    recentEndDate: toIsoDate(recentEndDate),
+    latestObservationDate: toIsoDate(current),
+    retrievalTimestamp: new Date().toISOString(),
+  };
+}
+
+export function buildHistoricalPriceSeries(
+  crop: Crop,
+  market: Market,
+  now = new Date(),
+): MandiPriceHistoryPoint[] {
+  const window = getPriceHistoryWindow(now);
+  const start = new Date(`${window.startDate}T00:00:00Z`);
+  const finish = new Date(`${window.endDate}T00:00:00Z`);
+  const recentStart = new Date(`${window.recentStartDate}T00:00:00Z`);
+  const recentEnd = new Date(`${window.recentEndDate}T00:00:00Z`);
+  const seed = hash(crop.id + market.id);
+  const mf = market.factor * (0.96 + (seed % 80) / 1000);
+  const points: MandiPriceHistoryPoint[] = [];
+
+  for (let cursor = new Date(start); cursor <= finish; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    const seriesIndex = Math.round((cursor.getTime() - start.getTime()) / 86400000);
+    const wave = 0.05 * Math.sin((seriesIndex + seed) / 7);
+    const noise = (((seed * (seriesIndex + 9)) % 71) / 71 - 0.5) * 0.035;
+    const trend = 1 + crop.trend * ((seriesIndex / 365) * 0.9);
+    const modalPrice = Math.max(
+      30,
+      Math.round(crop.basePrice * mf * (trend + wave + noise)),
+    );
+    const dateKey = toIsoDate(cursor);
+    const point: MandiPriceHistoryPoint = {
+      date: dateKey,
+      modalPrice,
+      minPrice: Math.round(modalPrice * 0.92),
+      maxPrice: Math.round(modalPrice * 1.08),
+      isRecentSevenDay: cursor >= recentStart && cursor <= recentEnd,
+    };
+    points.push(point);
+  }
+
+  return points;
+}
+
 export const PRICE_DATE = new Date().toISOString().slice(0, 10);
 
 /** Mandi Price Record for the KisanMandi Dashboard */

@@ -45,6 +45,20 @@ function FarmerProfilePage() {
   const [rate, setRate] = useState(s.rate || 1.8);
   const [vehicleRate, setVehicleRate] = useState(s.vehicleRate || 1.2);
   const [myVehicle, setMyVehicle] = useState(s.myVehicle || false);
+  const [dataGovApiKey, setDataGovApiKey] = useState("");
+  const [apiKeyTestStatus, setApiKeyTestStatus] = useState<
+    | "idle"
+    | "testing"
+    | "verified"
+    | "no-data"
+    | "not-verified"
+    | "rejected"
+    | "resource-error"
+    | "rate-limited"
+    | "timeout"
+    | "error"
+  >("idle");
+  const [apiKeyTestMessage, setApiKeyTestMessage] = useState<string | null>(null);
   const [showLocPicker, setShowLocPicker] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
@@ -59,6 +73,77 @@ function FarmerProfilePage() {
     });
 
     setSaveMsg(t.profileSaved);
+    setTimeout(() => setSaveMsg(null), 3000);
+  };
+
+  const handleSaveApiKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    const apiKey = dataGovApiKey.trim();
+    if (!apiKey) {
+      setSaveMsg(s.dataGovApiKey ? t.apiKeyConfigured : t.apiKeyNotConfigured);
+      setTimeout(() => setSaveMsg(null), 3000);
+      return;
+    }
+    set({ dataGovApiKey: apiKey });
+    setDataGovApiKey("");
+    setApiKeyTestStatus("idle");
+    setApiKeyTestMessage(null);
+    setSaveMsg(t.apiKeySaved);
+    setTimeout(() => setSaveMsg(null), 3000);
+  };
+
+  const handleTestApiKey = async () => {
+    const apiKey = dataGovApiKey.trim() || s.dataGovApiKey.trim();
+    if (!apiKey) {
+      setApiKeyTestStatus("not-verified");
+      setApiKeyTestMessage(null);
+      return;
+    }
+    setApiKeyTestStatus("testing");
+    setApiKeyTestMessage(null);
+    try {
+      const params = new URLSearchParams({ crop: s.crop, verifyKey: "1" });
+      const response = await fetch(`/api/mandi-prices?${params}`, {
+        headers: { "x-data-gov-key": apiKey },
+      });
+      const payload = (await response.json()) as {
+        source?: string;
+        upstreamStatus?: "ok" | "key-rejected" | "error";
+        upstreamErrorCode?: string;
+        upstreamMessage?: string;
+      };
+      setApiKeyTestMessage(payload.upstreamMessage ?? null);
+      if (response.ok && payload.upstreamStatus === "ok") {
+        setApiKeyTestStatus("verified");
+      } else if (payload.upstreamStatus === "key-rejected") {
+        setApiKeyTestStatus("rejected");
+      } else {
+        switch (payload.upstreamErrorCode) {
+          case "UPSTREAM_RESOURCE_ERROR":
+            setApiKeyTestStatus("resource-error");
+            break;
+          case "UPSTREAM_RATE_LIMIT":
+            setApiKeyTestStatus("rate-limited");
+            break;
+          case "UPSTREAM_TIMEOUT":
+            setApiKeyTestStatus("timeout");
+            break;
+          default:
+            setApiKeyTestStatus("error");
+        }
+      }
+    } catch (error) {
+      console.error("Unable to test Data.gov.in API key", error);
+      setApiKeyTestStatus("error");
+    }
+  };
+
+  const handleRemoveApiKey = () => {
+    set({ dataGovApiKey: "" });
+    setDataGovApiKey("");
+    setApiKeyTestStatus("idle");
+    setApiKeyTestMessage(null);
+    setSaveMsg(t.apiKeyRemoved);
     setTimeout(() => setSaveMsg(null), 3000);
   };
 
@@ -80,9 +165,7 @@ function FarmerProfilePage() {
               {t.profile || "Farmer Profile and Settings"}
             </h1>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {t.profileIntro}
-          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t.profileIntro}</p>
         </div>
 
         {saveMsg && (
@@ -97,9 +180,7 @@ function FarmerProfilePage() {
           onSubmit={handleSaveProfile}
           className="rounded-3xl border bg-card p-5 sm:p-6 shadow-2xs space-y-5"
         >
-          <h2 className="font-display text-base font-bold text-foreground">
-            {t.personalInfo}
-          </h2>
+          <h2 className="font-display text-base font-bold text-foreground">{t.personalInfo}</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
@@ -222,13 +303,103 @@ function FarmerProfilePage() {
           </button>
         </form>
 
+        {/* Live Data Source */}
+        <form
+          onSubmit={handleSaveApiKey}
+          className="rounded-3xl border bg-card p-5 sm:p-6 shadow-2xs space-y-4"
+        >
+          <div className="flex items-center gap-2">
+            <Lock className="size-5 text-primary" />
+            <h2 className="font-display text-base font-bold text-foreground">
+              {t.liveDataSourceTitle || "Live data source"}
+            </h2>
+          </div>
+
+          <label className="block space-y-1 text-xs">
+            <span className="font-semibold text-muted-foreground">
+              {t.dataGovApiKeyLabel || "Data.gov.in API key"}
+            </span>
+            <input
+              type="password"
+              value={dataGovApiKey}
+              onChange={(e) => {
+                setDataGovApiKey(e.target.value);
+                setApiKeyTestStatus("idle");
+                setApiKeyTestMessage(null);
+              }}
+              placeholder={
+                s.dataGovApiKey
+                  ? t.apiKeyConfigured
+                  : t.dataGovApiKeyPlaceholder || "Paste your API key here"
+              }
+              className="h-10 w-full rounded-xl border bg-background px-3 font-mono text-foreground"
+            />
+          </label>
+
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            {t.liveDataSourceDescription ||
+              "Use a Data.gov.in API key (not a Gemini key) to enable real-time mandi price updates. The key is stored on this device and sent only to your app server."}
+          </p>
+          <button
+            type="submit"
+            className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
+          >
+            <Save className="size-4" />
+            <span>{t.saveApiKey}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleTestApiKey()}
+            disabled={apiKeyTestStatus === "testing" || (!dataGovApiKey.trim() && !s.dataGovApiKey)}
+            className="ml-2 flex min-h-10 items-center justify-center gap-2 rounded-xl border bg-background px-4 text-xs font-bold text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`size-4 ${apiKeyTestStatus === "testing" ? "animate-spin" : ""}`}
+            />
+            <span>{apiKeyTestStatus === "testing" ? t.testingApiKey : t.testApiKey}</span>
+          </button>
+          {s.dataGovApiKey && (
+            <button
+              type="button"
+              onClick={handleRemoveApiKey}
+              className="ml-2 flex min-h-10 items-center justify-center rounded-xl border border-destructive/40 bg-background px-4 text-xs font-bold text-destructive hover:bg-destructive/5 transition-colors"
+            >
+              {t.removeApiKey}
+            </button>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            {apiKeyTestStatus === "verified"
+              ? t.apiKeyVerified
+              : apiKeyTestStatus === "no-data"
+                ? t.liveNoRecords
+                : apiKeyTestStatus === "rejected"
+                  ? t.apiKeyRejected
+                  : apiKeyTestStatus === "resource-error"
+                    ? t.apiKeyResourceError
+                    : apiKeyTestStatus === "rate-limited"
+                      ? t.apiKeyRateLimited
+                      : apiKeyTestStatus === "timeout"
+                        ? t.apiKeyTimeout
+                        : apiKeyTestStatus === "not-verified"
+                          ? t.apiKeyNotVerified
+                          : apiKeyTestStatus === "error"
+                            ? t.apiKeyTestError
+                            : s.dataGovApiKey
+                              ? t.apiKeyConfigured
+                              : t.apiKeyNotConfigured}
+          </p>
+          {apiKeyTestMessage && (
+            <p className="text-[11px] text-muted-foreground">
+              {t.dataGovResponseDetail}: {apiKeyTestMessage}
+            </p>
+          )}
+        </form>
+
         {/* Language Selection Grid */}
         <section className="rounded-3xl border bg-card p-5 sm:p-6 shadow-2xs space-y-4">
           <div className="flex items-center gap-2">
             <Languages className="size-5 text-primary" />
-            <h2 className="font-display text-base font-bold text-foreground">
-              {t.appLanguage}
-            </h2>
+            <h2 className="font-display text-base font-bold text-foreground">{t.appLanguage}</h2>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
@@ -297,9 +468,7 @@ function FarmerProfilePage() {
             <Shield className="size-4" />
             {t.localDataPrivacy}
           </h2>
-          <p className="text-muted-foreground">
-            {t.localDataDescription}
-          </p>
+          <p className="text-muted-foreground">{t.localDataDescription}</p>
           <button
             type="button"
             onClick={handleResetData}

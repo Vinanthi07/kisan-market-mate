@@ -56,14 +56,27 @@ function MandiPricesPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshSuccess, setRefreshSuccess] = useState(false);
   const [liveRecords, setLiveRecords] = useState<MandiPriceRecord[] | null>(null);
-  const [dataStatus, setDataStatus] = useState<"missing-key" | "error" | "empty" | "live">("missing-key");
-  const dataNotice = liveRecords
+  const [priceWindow, setPriceWindow] = useState<{
+    startDate?: string;
+    endDate?: string;
+    recentStartDate?: string;
+    recentEndDate?: string;
+    latestObservationDate?: string | null;
+    actualRetrievalTime?: string;
+    retrievalTimestamp?: string;
+  } | null>(null);
+  const [dataStatus, setDataStatus] = useState<
+    "missing-key" | "error" | "key-rejected" | "empty" | "live"
+  >("missing-key");
+  const dataNotice = dataStatus === "live"
     ? t.liveDataReady
     : dataStatus === "missing-key"
       ? t.demoFallbackMissingKey
       : dataStatus === "empty"
         ? t.liveNoRecords
-        : t.demoFallbackError;
+        : dataStatus === "key-rejected"
+          ? t.apiKeyNotVerified
+          : t.demoFallbackError;
 
   const loadPrices = useCallback(async (signal?: AbortSignal) => {
     setIsRefreshing(true);
@@ -71,20 +84,50 @@ function MandiPricesPage() {
     try {
       const params = new URLSearchParams({ crop: selectedCrop });
       if (selectedState !== "All") params.set("state", selectedState);
-      const response = await fetch(`/api/mandi-prices?${params}`, { signal });
+      const headers = s.dataGovApiKey
+        ? { "x-data-gov-key": s.dataGovApiKey }
+        : undefined;
+      const response = await fetch(`/api/mandi-prices?${params}`, { signal, headers });
       const payload = (await response.json()) as {
         records?: MandiPriceRecord[];
+        source?: "live" | "demo" | "empty";
         error?: string;
+        upstreamStatus?: "ok" | "key-rejected" | "error";
+        historyWindow?: {
+          startDate?: string;
+          endDate?: string;
+          recentStartDate?: string;
+          recentEndDate?: string;
+          latestObservationDate?: string;
+          retrievalTimestamp?: string;
+        };
+        latestObservationDate?: string;
       };
       if (!response.ok) {
         setDataStatus(payload.error === "api_key_missing" ? "missing-key" : "error");
         return false;
       }
+      setPriceWindow({
+        ...payload.historyWindow,
+        latestObservationDate: payload.latestObservationDate ?? undefined,
+        retrievalTimestamp: payload.actualRetrievalTime,
+      });
       if (!payload.records?.length) {
+        setLiveRecords([]);
         setDataStatus("empty");
         return false;
       }
       setLiveRecords(payload.records);
+      if (payload.source === "demo") {
+        setDataStatus(
+          payload.upstreamStatus === "key-rejected"
+            ? "key-rejected"
+            : s.dataGovApiKey
+              ? "error"
+              : "missing-key",
+        );
+        return false;
+      }
       setDataStatus("live");
       return true;
     } catch (error) {
@@ -94,7 +137,7 @@ function MandiPricesPage() {
     } finally {
       if (!signal?.aborted) setIsRefreshing(false);
     }
-  }, [selectedCrop, selectedState]);
+  }, [selectedCrop, selectedState, s.dataGovApiKey]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -112,7 +155,7 @@ function MandiPricesPage() {
   const demoRecords = useMemo(() => {
     return getMandiPriceRecords(selectedCrop, selectedState === "All" ? undefined : selectedState);
   }, [selectedCrop, selectedState]);
-  const allRecords = liveRecords ?? demoRecords;
+  const allRecords = liveRecords?.length ? liveRecords : demoRecords;
 
   // Filter records
   const filteredRecords = useMemo(() => {
@@ -137,6 +180,21 @@ function MandiPricesPage() {
   };
 
   const crop = cropById(selectedCrop);
+  const formatDate = (value?: string) => {
+    if (!value) return "N/A";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  };
+  const formatTimestamp = (value?: string) => {
+    if (!value) return "N/A";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+  const priceWindowText = priceWindow
+    ? `${formatDate(priceWindow.startDate)} to ${formatDate(priceWindow.endDate)} • Latest: ${formatDate(priceWindow.latestObservationDate)} • Retrieved: ${formatTimestamp(priceWindow.retrievalTimestamp)}`
+    : "Date range unavailable";
 
   return (
     <Page>
@@ -203,12 +261,12 @@ function MandiPricesPage() {
               {t.dataTransparency}
               <span
                 className={`rounded px-1.5 py-0.5 text-[10px] ${
-                  liveRecords
+                  dataStatus === "live"
                     ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
                     : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
                 }`}
               >
-                {liveRecords ? t.liveDataBadge : t.demoDataBadge}
+                {dataStatus === "live" ? t.liveDataBadge : t.demoDataBadge}
               </span>
             </span>
           </div>
@@ -223,6 +281,19 @@ function MandiPricesPage() {
             <span>{t.cacheResynced}</span>
           </div>
         )}
+
+        <div className="rounded-2xl border bg-card p-3.5 text-xs text-foreground shadow-2xs">
+          <div className="flex items-center gap-2 font-bold text-primary">
+            <Calendar className="size-4" />
+            <span>Historical price intelligence</span>
+          </div>
+          <div className="mt-2 space-y-1 text-muted-foreground">
+            <p>Range: {priceWindowText}</p>
+            <p>
+              Base window: {formatDate(priceWindow?.startDate)} through {formatDate(priceWindow?.endDate)} · Recent 7-day window: {formatDate(priceWindow?.recentStartDate)} through {formatDate(priceWindow?.recentEndDate)}
+            </p>
+          </div>
+        </div>
 
         {/* Filter Controls Bar */}
         <div className="rounded-2xl border bg-card p-4 shadow-2xs space-y-3">
@@ -365,7 +436,7 @@ function MandiPricesPage() {
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t">
                   <span className="flex items-center gap-1">
                     <Clock className="size-3" />
-                    {rec.retrievalTimestamp}
+                    {rec.isDemo ? t.simulatedDemoSeries : rec.retrievalTimestamp}
                   </span>
                   <span>{rec.priceUnit}</span>
                 </div>
@@ -400,7 +471,9 @@ function MandiPricesPage() {
                       <td className="py-2.5 px-3 text-muted-foreground">
                         {rec.district}, {rec.state}
                       </td>
-                      <td className="py-2.5 px-3 text-muted-foreground">{rec.arrivalDate}</td>
+                      <td className="py-2.5 px-3 text-muted-foreground">
+                        {rec.isDemo ? t.simulatedDemoSeries : rec.arrivalDate}
+                      </td>
                       <td className="py-2.5 px-3 text-right text-muted-foreground">
                         ₹{rec.minPrice}
                       </td>
