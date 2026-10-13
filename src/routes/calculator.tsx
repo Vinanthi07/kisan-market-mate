@@ -36,6 +36,7 @@ import {
   type WeightUnit,
 } from "@/lib/calc";
 import { CROPS, cropById, type CropId } from "@/lib/data";
+import { fmt } from "@/lib/i18n";
 import { useSettings } from "@/lib/store";
 
 export const Route = createFileRoute("/calculator")({
@@ -106,6 +107,9 @@ function FarmingProfitCalculatorPage() {
   }, []);
 
   const crop = useMemo(() => cropById(selectedCropId), [selectedCropId]);
+  const areaUnitLabel =
+    areaUnit === "acre" ? t.areaUnitAcre : areaUnit === "hectare" ? t.areaUnitHectare : t.areaUnitGuntha;
+  const priceUnitLabel = priceUnit === "quintal" ? t.quintal : priceUnit === "kg" ? t.kg : t.tonne;
 
   // Sync defaults when crop changes
   const handleCropChange = (newCropId: CropId) => {
@@ -200,7 +204,7 @@ function FarmingProfitCalculatorPage() {
     setSavedScenarios(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     setScenarioNameInput("");
-    setSaveSuccessMsg(`Scenario "${name}" saved to your local device.`);
+    setSaveSuccessMsg(fmt(t.scenarioSaved, { name }));
     setTimeout(() => setSaveSuccessMsg(null), 3000);
   };
 
@@ -243,7 +247,7 @@ function FarmingProfitCalculatorPage() {
               </h1>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Production expenses, marketing logistics, net income, and break-even analysis.
+              {t.calculatorIntro}
             </p>
           </div>
         </div>
@@ -252,7 +256,7 @@ function FarmingProfitCalculatorPage() {
         <div className="rounded-2xl border bg-card p-4 shadow-2xs space-y-4">
           <div>
             <label className="text-xs font-semibold text-muted-foreground block mb-1">
-              Select Crop
+              {t.chooseCrop}
             </label>
             <CropPicker
               value={selectedCropId}
@@ -266,7 +270,7 @@ function FarmingProfitCalculatorPage() {
             {/* Area */}
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                Cultivated Land Area
+                {t.cultivateLandArea}
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -282,9 +286,9 @@ function FarmingProfitCalculatorPage() {
                   onChange={(e) => setAreaUnit(e.target.value as "acre" | "hectare" | "guntha")}
                   className="h-10 rounded-xl border bg-background px-2 text-xs font-semibold"
                 >
-                  <option value="acre">Acres</option>
-                  <option value="hectare">Hectares</option>
-                  <option value="guntha">Guntas</option>
+                  <option value="acre">{t.areaUnitAcre}</option>
+                  <option value="hectare">{t.areaUnitHectare}</option>
+                  <option value="guntha">{t.areaUnitGuntha}</option>
                 </select>
               </div>
             </div>
@@ -292,7 +296,7 @@ function FarmingProfitCalculatorPage() {
             {/* Expected Yield */}
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                Expected Total Harvest Yield
+                {t.expectedHarvestYield}
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -307,9 +311,9 @@ function FarmingProfitCalculatorPage() {
                   onChange={(e) => setYieldUnit(e.target.value as "quintal" | "kg" | "tonne")}
                   className="h-10 rounded-xl border bg-background px-2 text-xs font-semibold"
                 >
-                  <option value="quintal">Quintals</option>
-                  <option value="kg">kg</option>
-                  <option value="tonne">Tonnes</option>
+                  <option value="quintal">{t.quintal}</option>
+                  <option value="kg">{t.kg}</option>
+                  <option value="tonne">{t.tonne}</option>
                 </select>
               </div>
             </div>
@@ -317,7 +321,7 @@ function FarmingProfitCalculatorPage() {
             {/* Expected Selling Price */}
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                Expected Selling Price (₹)
+                {t.expectedPrice} (₹)
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -330,7 +334,7 @@ function FarmingProfitCalculatorPage() {
                   className="h-10 w-full rounded-xl border bg-background px-3 text-xs font-bold text-foreground"
                 />
                 <span className="text-xs font-bold text-muted-foreground shrink-0">
-                  / {priceUnit}
+                  / {priceUnitLabel}
                 </span>
               </div>
             </div>
@@ -343,12 +347,12 @@ function FarmingProfitCalculatorPage() {
           <div className="rounded-2xl border bg-card p-4 shadow-2xs space-y-3">
             <h2 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
               <Sprout className="size-4 text-primary" />
-              1. Farm Cultivation Expenses (₹)
+              1. {t.farmCultivationExpenses}
             </h2>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">Seeds / Saplings:</label>
+                <label className="text-muted-foreground">{t.seedSaplingCost}</label>
                 <input
                   type="number"
                   value={seedCost}
@@ -358,7 +362,7 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">Fertilizers & Manure:</label>
+                <label className="text-muted-foreground">{t.fertilizerCost}:</label>
                 <input
                   type="number"
                   value={fertilizerManureCost}
@@ -368,7 +372,7 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">Labour (Sowing, Weeding, Harvest):</label>
+                <label className="text-muted-foreground">{t.labourCostLabel}</label>
                 <input
                   type="number"
                   value={labourCost}
@@ -378,7 +382,7 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">Irrigation & Power / Fuel:</label>
+                <label className="text-muted-foreground">{t.irrigationFuelCost}</label>
                 <input
                   type="number"
                   value={irrigationCost}
@@ -388,7 +392,7 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">Tractor / Machinery Hire:</label>
+                <label className="text-muted-foreground">{t.machineryHireCost}</label>
                 <input
                   type="number"
                   value={machineryEquipmentCost}
@@ -398,7 +402,7 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">Other Field Inputs:</label>
+                <label className="text-muted-foreground">{t.otherFieldInputs}</label>
                 <input
                   type="number"
                   value={otherCultivationCost}
@@ -408,7 +412,7 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t font-bold">
-                <span>Subtotal Production Cost:</span>
+                <span>{t.subtotalProduction}</span>
                 <span className="text-foreground">{rupees(result.totalProductionCost)}</span>
               </div>
             </div>
@@ -418,12 +422,12 @@ function FarmingProfitCalculatorPage() {
           <div className="rounded-2xl border bg-card p-4 shadow-2xs space-y-3">
             <h2 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
               <Coins className="size-4 text-primary" />
-              2. Post-Harvest & Selling Logistics (₹)
+              2. {t.postHarvestLogistics}
             </h2>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">Bags, Crates & Packaging:</label>
+                <label className="text-muted-foreground">{t.packagingBagsCrates}</label>
                 <input
                   type="number"
                   value={packagingCost}
@@ -433,7 +437,7 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">Freight & Transport to Mandi:</label>
+                <label className="text-muted-foreground">{t.freightToMandi}</label>
                 <input
                   type="number"
                   value={transportCost}
@@ -443,7 +447,7 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">APMC Statutory Fees / Hamali:</label>
+                <label className="text-muted-foreground">{t.apmcFeesHamali}</label>
                 <input
                   type="number"
                   value={mandiFees}
@@ -453,7 +457,7 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <label className="text-muted-foreground">Incidentals & Market Spoilage:</label>
+                <label className="text-muted-foreground">{t.incidentalSpoilage}</label>
                 <input
                   type="number"
                   value={otherSellingCost}
@@ -463,12 +467,12 @@ function FarmingProfitCalculatorPage() {
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t font-bold">
-                <span>Subtotal Marketing Logistics:</span>
+                <span>{t.subtotalLogistics}</span>
                 <span className="text-foreground">{rupees(result.totalSellingLogisticsCost)}</span>
               </div>
 
               <div className="rounded-xl bg-muted/40 p-2.5 mt-2 flex items-center justify-between font-extrabold text-foreground">
-                <span>TOTAL COMBINED COSTS:</span>
+                <span>{t.totalCombinedCosts}</span>
                 <span className="text-destructive">{rupees(result.totalCombinedCost)}</span>
               </div>
             </div>
@@ -493,8 +497,8 @@ function FarmingProfitCalculatorPage() {
                 }`}
               >
                 {result.isProfitable
-                  ? "Estimated Profitable Crop"
-                  : "Projected Loss at Current Rates"}
+                  ? t.estimatedProfitable
+                  : t.projectedLoss}
               </span>
 
               <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-foreground">
@@ -503,14 +507,18 @@ function FarmingProfitCalculatorPage() {
                   : rupees(result.netProfitOrLoss)}
               </h2>
               <p className="text-xs text-muted-foreground">
-                Estimated Net Farm Income for {cultivatedArea} {areaUnit} of {crop.name}
+                {fmt(t.estimatedNetIncome, {
+                  area: cultivatedArea,
+                  unit: areaUnitLabel,
+                  crop: crop.localizedNames[s.lang] ?? crop.name,
+                })}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-right">
               <div className="rounded-2xl border bg-card p-3">
                 <span className="block text-[10px] text-muted-foreground font-semibold">
-                  Gross Revenue
+                  {t.grossRevenue}
                 </span>
                 <span className="font-display text-lg font-extrabold text-foreground">
                   {rupees(result.grossRevenue)}
@@ -519,7 +527,7 @@ function FarmingProfitCalculatorPage() {
 
               <div className="rounded-2xl border bg-card p-3">
                 <span className="block text-[10px] text-muted-foreground font-semibold">
-                  Profit Margin
+                  {t.profitMargin}
                 </span>
                 <span className="font-display text-lg font-extrabold text-foreground">
                   {result.profitMarginPercent !== null ? `${result.profitMarginPercent}%` : "0%"}
@@ -532,25 +540,25 @@ function FarmingProfitCalculatorPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t">
             <div className="rounded-2xl bg-muted/30 p-3.5 space-y-1">
               <span className="text-xs font-bold text-muted-foreground block">
-                Cost of Production per Quintal
+                {t.productionCostPerQuintal}
               </span>
               <p className="font-display text-xl font-extrabold text-foreground">
-                ₹{result.costPerUnitQuintal} / quintal
+                ₹{result.costPerUnitQuintal} / {t.quintal}
               </p>
               <p className="text-[11px] text-muted-foreground">
-                Total expenditure divided by total {result.totalYieldQuintals} quintals yield.
+                {fmt(t.yieldCostExplanation, { yield: result.totalYieldQuintals })}
               </p>
             </div>
 
             <div className="rounded-2xl bg-muted/30 p-3.5 space-y-1">
               <span className="text-xs font-bold text-muted-foreground block">
-                Break-Even Selling Price
+                {t.breakEvenPrice}
               </span>
               <p className="font-display text-xl font-extrabold text-primary">
-                ₹{result.breakEvenSellingPricePerQuintal} / quintal
+                ₹{result.breakEvenSellingPricePerQuintal} / {t.quintal}
               </p>
               <p className="text-[11px] text-muted-foreground">
-                You must realize at least this price at the mandi gate to avoid financial loss.
+                {t.breakEvenExplanation}
               </p>
             </div>
           </div>
@@ -560,7 +568,7 @@ function FarmingProfitCalculatorPage() {
         <section className="rounded-2xl border bg-card p-4 shadow-2xs space-y-3">
           <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-foreground">
             <Sparkles className="size-4 text-primary" />
-            Market Sensitivity Scenarios (What-If Analysis)
+            {t.marketSensitivity}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -568,32 +576,32 @@ function FarmingProfitCalculatorPage() {
             <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 space-y-1">
               <span className="font-bold text-destructive flex items-center gap-1">
                 <TrendingDown className="size-3.5" />
-                Price Drops 10% (₹{Math.round(expectedSellingPrice * 0.9)}/q)
+                {t.priceDrops10} (₹{Math.round(expectedSellingPrice * 0.9)}/q)
               </span>
               <span className="block text-sm font-extrabold text-foreground">
-                Net:{" "}
+                {t.netLabel}{" "}
                 {pessimisticResult.netProfitOrLoss >= 0
                   ? `+${rupees(pessimisticResult.netProfitOrLoss)}`
                   : rupees(pessimisticResult.netProfitOrLoss)}
               </span>
               <span className="block text-[10px] text-muted-foreground">
-                Margin: {pessimisticResult.profitMarginPercent}%
+                {t.marginLabel} {pessimisticResult.profitMarginPercent}%
               </span>
             </div>
 
             {/* Expected Base Case */}
             <div className="rounded-xl border border-primary/40 bg-primary/5 p-3 space-y-1">
               <span className="font-bold text-primary">
-                Base Expected (₹{expectedSellingPrice}/q)
+                {t.baseExpected} (₹{expectedSellingPrice}/q)
               </span>
               <span className="block text-sm font-extrabold text-foreground">
-                Net:{" "}
+                {t.netLabel}{" "}
                 {result.netProfitOrLoss >= 0
                   ? `+${rupees(result.netProfitOrLoss)}`
                   : rupees(result.netProfitOrLoss)}
               </span>
               <span className="block text-[10px] text-muted-foreground">
-                Margin: {result.profitMarginPercent}%
+                {t.marginLabel} {result.profitMarginPercent}%
               </span>
             </div>
 
@@ -601,13 +609,13 @@ function FarmingProfitCalculatorPage() {
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-1">
               <span className="font-bold text-emerald-600 flex items-center gap-1">
                 <TrendingUp className="size-3.5" />
-                Price Rises 10% (₹{Math.round(expectedSellingPrice * 1.1)}/q)
+                {t.priceRises10} (₹{Math.round(expectedSellingPrice * 1.1)}/q)
               </span>
               <span className="block text-sm font-extrabold text-foreground">
-                Net: +{rupees(optimisticResult.netProfitOrLoss)}
+                {t.netLabel} +{rupees(optimisticResult.netProfitOrLoss)}
               </span>
               <span className="block text-[10px] text-muted-foreground">
-                Margin: {optimisticResult.profitMarginPercent}%
+                {t.marginLabel} {optimisticResult.profitMarginPercent}%
               </span>
             </div>
           </div>
@@ -618,14 +626,14 @@ function FarmingProfitCalculatorPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <h3 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
               <Bookmark className="size-4 text-primary" />
-              Save Calculation for Comparison
+              {t.saveCalculation}
             </h3>
           </div>
 
           <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder="e.g. Tomato Kharif 2026 Batch 1"
+              placeholder={t.scenarioNamePlaceholder}
               value={scenarioNameInput}
               onChange={(e) => setScenarioNameInput(e.target.value)}
               className="h-10 w-full rounded-xl border bg-background px-3 text-xs focus:ring-2 focus:ring-primary"
@@ -636,7 +644,7 @@ function FarmingProfitCalculatorPage() {
               className="flex h-10 items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shrink-0 shadow-xs hover:bg-primary/90"
             >
               <Save className="size-3.5" />
-              Save
+              {t.save}
             </button>
           </div>
 
@@ -651,7 +659,7 @@ function FarmingProfitCalculatorPage() {
           {savedScenarios.length > 0 && (
             <div className="space-y-2 pt-2 border-t">
               <span className="text-[11px] font-bold text-muted-foreground uppercase">
-                Saved Calculations ({savedScenarios.length})
+                {fmt(t.savedCalculations, { n: savedScenarios.length })}
               </span>
               <div className="space-y-2">
                 {savedScenarios.map((sc) => (
@@ -662,7 +670,7 @@ function FarmingProfitCalculatorPage() {
                     <div>
                       <span className="font-bold text-foreground block">{sc.name}</span>
                       <span className="text-[11px] text-muted-foreground">
-                        {sc.cropName} · {sc.date} · Net: {rupees(sc.netProfit)}
+                        {sc.cropName} · {sc.date} · {t.netLabel} {rupees(sc.netProfit)}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -671,13 +679,13 @@ function FarmingProfitCalculatorPage() {
                         onClick={() => handleLoadScenario(sc)}
                         className="rounded-lg border bg-card px-2.5 py-1 text-xs font-semibold text-primary hover:bg-muted"
                       >
-                        Load
+                        {t.loadScenario}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDeleteScenario(sc.id)}
                         className="rounded-lg border bg-card p-1 text-destructive hover:bg-muted"
-                        aria-label="Delete scenario"
+                        aria-label={t.deleteScenario}
                       >
                         <Trash2 className="size-3.5" />
                       </button>
@@ -693,12 +701,10 @@ function FarmingProfitCalculatorPage() {
         <div className="rounded-2xl border border-border/80 bg-muted/20 p-3.5 text-xs text-muted-foreground space-y-1">
           <div className="flex items-center gap-1.5 font-bold text-foreground">
             <ShieldAlert className="size-4 text-primary" />
-            <span>Economic Estimation Assumption Notice</span>
+            <span>{t.economicNotice}</span>
           </div>
           <p className="leading-relaxed">
-            All figures are economic projections based on user-entered parameters and current APMC
-            benchmarks. Weather variations, unexpected labour cost inflation, pest outbreaks and
-            post-harvest grading discrepancies may result in differing realized farm returns.
+            {t.disclaimer}
           </p>
         </div>
       </div>

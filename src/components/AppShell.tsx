@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { LocationSelector } from "./LocationSelector";
-import { LANGS } from "@/lib/i18n";
+import { LANGS, locationLabel } from "@/lib/i18n";
 import { useSettings } from "@/lib/store";
 
 export function TopBar() {
@@ -42,7 +42,7 @@ export function TopBar() {
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            aria-label="Open navigation menu"
+            aria-label={t.openNavigationMenu}
             className="flex size-10 items-center justify-center rounded-xl border bg-background hover:bg-muted md:hidden"
           >
             <Menu className="size-5 text-foreground" />
@@ -110,11 +110,11 @@ export function TopBar() {
           <button
             type="button"
             onClick={() => setLocModalOpen(true)}
-            aria-label="Change location"
+            aria-label={t.changeLocation || "Change location"}
             className="flex h-9 items-center gap-1.5 rounded-xl border bg-background px-2.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors max-w-[130px] sm:max-w-[180px] truncate"
           >
             <MapPin className="size-3.5 text-primary shrink-0" />
-            <span className="truncate">{s.loc?.village || s.loc?.district || "Location"}</span>
+            <span className="truncate">{locationLabel(s.loc, t)}</span>
           </button>
 
           {/* Language Switcher */}
@@ -132,7 +132,7 @@ export function TopBar() {
             {langOpen && (
               <div className="absolute right-0 top-full mt-1.5 grid w-48 gap-1 rounded-2xl border bg-popover p-1.5 shadow-xl z-[100]">
                 <p className="px-2 py-1 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                  Select Language
+                  {t.selectLanguage || "Select Language"}
                 </p>
                 {LANGS.map((l) => (
                   <button
@@ -170,11 +170,11 @@ export function TopBar() {
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            aria-label="All KisanSaathi modules"
+            aria-label={t.allModules || "All Modules & Tools"}
             className="hidden md:flex h-9 items-center gap-1.5 rounded-xl border bg-background px-2.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             <Menu className="size-4 text-primary" />
-            <span>Modules</span>
+            <span>{t.modules || "Modules"}</span>
           </button>
         </div>
       </header>
@@ -217,7 +217,7 @@ export function TopBar() {
                   <h2 className="font-display text-base font-extrabold text-foreground leading-tight">
                     {t.appName || "KisanSaathi"}
                   </h2>
-                  <p className="text-[11px] text-muted-foreground">All Modules & Tools</p>
+                  <p className="text-[11px] text-muted-foreground">{t.allModulesShort || "All Modules & Tools"}</p>
                 </div>
               </div>
               <button
@@ -235,80 +235,80 @@ export function TopBar() {
                   to: "/",
                   icon: Home,
                   label: t.home || "Home Dashboard",
-                  desc: "Overview & quick actions",
+                  desc: t.overviewQuickActions || "Overview & quick actions",
                 },
                 {
                   to: "/mandi-prices",
                   icon: Store,
                   label: t.mandiPrices || "KisanMandi Prices",
-                  desc: "Live APMC modal rates",
+                  desc: t.liveApmcRates || "Live APMC modal rates",
                 },
                 {
                   to: "/best-market",
                   icon: Compass,
                   label: t.bestMarket || "Best Market Finder",
-                  desc: "Net proceeds after transport",
+                  desc: t.netAfterTransport || "Net proceeds after transport",
                 },
                 {
                   to: "/when-to-sell",
                   icon: Hourglass,
                   label: t.whenToSell || "When to Sell",
-                  desc: "Trend & storage decision support",
+                  desc: t.trendSupport || "Trend & storage decision support",
                 },
                 {
                   to: "/trends",
                   icon: LineChart,
                   label: t.trends || "Price Trends & Planning",
-                  desc: "60-day historical charts & crop planner",
+                  desc: t.historicalCharts || "60-day historical charts & crop planner",
                 },
                 {
                   to: "/calculator",
                   icon: Calculator,
                   label: t.calculator || "Farming Profit Calculator",
-                  desc: "Cost of cultivation & break-even",
+                  desc: t.cultivationBreakEven || "Cost of cultivation & break-even",
                 },
                 {
                   to: "/buyers",
                   icon: Handshake,
                   label: t.buyers || "Direct Buyer Market",
-                  desc: "Connect with FPOs & aggregators",
+                  desc: t.fpoConnect || "Connect with FPOs & aggregators",
                 },
                 {
                   to: "/fertilizer",
                   icon: Sprout,
                   label: t.fertilizer || "Organic Fertilizer & Manure",
-                  desc: "Vermicompost & bio-inputs",
+                  desc: t.vermiInputs || "Vermicompost & bio-inputs",
                 },
                 {
                   to: "/workshops",
                   icon: GraduationCap,
                   label: t.workshops || "Training & Workshops",
-                  desc: "Extension learning sessions",
+                  desc: t.extensionLearning || "Extension learning sessions",
                 },
                 {
                   to: "/transport",
                   icon: Truck,
                   label: t.transport || "Transport Coordination",
-                  desc: "Vehicle matching & load pooling",
+                  desc: t.vehiclePooling || "Vehicle matching & load pooling",
                 },
                 {
                   to: "/lantana-guard",
                   icon: ShieldAlert,
                   label: t.lantanaGuard || "Lantana Eco-Guard",
-                  desc: "Research-pilot grain storage module",
+                  desc: t.researchPilotModuleDesc || "Research-pilot grain storage module",
                   highlight: true,
                 },
                 {
                   to: "/profile",
                   icon: User,
                   label: t.profile || "Farmer Profile & Settings",
-                  desc: "Preferences, crops & saved data",
+                  desc: t.profilePreferences || "Preferences, crops & saved data",
                 },
                 {
                   to: "/about",
                   icon: HelpCircle,
                   label: t.about || "Help & Data Sources",
-                  desc: "Agmarknet details & disclaimers",
+                  desc: t.helpSources || "Agmarknet details & disclaimers",
                 },
               ].map((item) => (
                 <Link
@@ -384,7 +384,7 @@ export function BottomNav() {
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-[40] grid grid-cols-5 border-t bg-card/98 backdrop-blur-md md:hidden safe-area-pb"
-      aria-label="Main Navigation"
+      aria-label={t.mainNavigation}
     >
       {items.map(({ to, icon: Icon, label }) => {
         const active = path === to || (to === "/" && path === "");

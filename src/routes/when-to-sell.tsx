@@ -26,6 +26,7 @@ import { CropPicker } from "@/components/CropPicker";
 import { ListenButton } from "@/components/ListenButton";
 import { evaluateWhenToSell, rupees, type WhenToSellAdvisory } from "@/lib/calc";
 import { CROPS, cropById, MARKETS, priceSeries, type CropId } from "@/lib/data";
+import { fmt } from "@/lib/i18n";
 import { useSettings } from "@/lib/store";
 
 export const Route = createFileRoute("/when-to-sell")({
@@ -72,61 +73,67 @@ function WhenToSellPage() {
   const finalRecommendation = useMemo(() => {
     if (crop.perishability === "high") {
       return {
-        action: "SELL PROMPTLY",
-        badge: "High Perishability Risk",
+        action: t.sellPromptlyAction,
+        badge: t.sellPromptlyBadge,
         color: "bg-destructive text-destructive-foreground",
-        reason: `${crop.name} deteriorates rapidly within ${crop.shelfNormal} days. Even if price trends are rising, quality deductions and weight loss will erode gains.`,
+        reason: fmt(t.sellPromptlyReason, {
+          crop: crop.localizedNames[s.lang] ?? crop.name,
+          days: crop.shelfNormal,
+        }),
       };
     }
     if (hasUrgentCashNeed) {
       return {
-        action: "SELL NOW FOR LIQUIDITY",
-        badge: "Immediate Cash Requirement",
+        action: t.urgentSellAction,
+        badge: t.urgentSellBadge,
         color: "bg-amber-600 text-white",
-        reason:
-          "When immediate working capital or loan repayments are due, price speculations carry unnecessary distress risk.",
+        reason: t.urgentSellReason,
       };
     }
     if (!hasGoodVentilatedStorage) {
       return {
-        action: "SELL NOW — STORAGE INADEQUATE",
-        badge: "Risk of Storage Spoilage",
+        action: t.inadequateStorageAction,
+        badge: t.inadequateStorageBadge,
         color: "bg-amber-600 text-white",
-        reason:
-          "Without moisture-controlled, pest-protected storage, holding produce risks mold, weevil infestation and sprouting.",
+        reason: t.inadequateStorageReason,
       };
     }
     if (advisory.direction === "increasing") {
       return {
-        action: "CONSIDER HOLDING (SAFE STORAGE)",
-        badge: "Upward Momentum",
+        action: t.considerHoldingAction,
+        badge: t.upwardMomentumBadge,
         color: "bg-emerald-700 text-white",
-        reason: advisory.detailedExplanation,
+        reason: fmt(t.risingAdviceBody, {
+          avg3: advisory.average3Day ?? currentPrice,
+          avg7: advisory.average7Day ?? currentPrice,
+          days: advisory.safeStorageLimitDays,
+          cost: advisory.estimatedStorageCostPerDay,
+        }),
       };
     }
     if (advisory.direction === "decreasing") {
       return {
-        action: "SELL NOW — TREND WEAKENING",
-        badge: "Downward Trajectory",
+        action: t.weakeningTrendAction,
+        badge: t.downwardTrajectoryBadge,
         color: "bg-destructive text-white",
-        reason: advisory.detailedExplanation,
+        reason: fmt(t.fallingAdviceBody, {
+          avg3: advisory.average3Day ?? currentPrice,
+          avg7: advisory.average7Day ?? currentPrice,
+          cost: advisory.estimatedStorageCostPerDay,
+        }),
       };
     }
     return {
-      action: "EXERCISE CAUTION / COMPARE LOCALLY",
-      badge: "Range-Bound Market",
+      action: t.cautionCompareAction,
+      badge: t.rangeBoundBadge,
       color: "bg-muted text-foreground",
-      reason: advisory.detailedExplanation,
+      reason: t.mixedAdviceBody,
     };
-  }, [crop, hasUrgentCashNeed, hasGoodVentilatedStorage, advisory]);
+  }, [crop, hasUrgentCashNeed, hasGoodVentilatedStorage, advisory, t, s.lang, currentPrice]);
 
   const voiceText = useMemo(() => {
-    return `When to sell assessment for ${crop.localizedNames[s.lang] ?? crop.name} at ${
-      market.names[s.lang] ?? market.names.en
-    }: Recent 3-day average is ${advisory.average3Day} rupees, and 7-day average is ${
-      advisory.average7Day
-    } rupees. ${advisory.directionLabel} Recommendation: ${finalRecommendation.action}. ${finalRecommendation.reason}`;
-  }, [crop, market, advisory, finalRecommendation, s.lang]);
+    return `${t.whenToSell}: ${crop.localizedNames[s.lang] ?? crop.name}, ${market.names[s.lang] ?? market.names.en}. ${t.threeDayAvg}: ${advisory.average3Day ?? t.empty}. ${t.sevenDayAvg}: ${advisory.average7Day ?? t.empty}. ${finalRecommendation.action}. ${finalRecommendation.reason}`;
+  }, [crop, market, advisory, finalRecommendation, s.lang, t]);
 
   return (
     <Page>
@@ -141,8 +148,7 @@ function WhenToSellPage() {
               </h1>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Transparent price trajectory analysis balanced against perishability and holding
-              costs.
+              {t.routeIntroSell}
             </p>
           </div>
 
@@ -153,7 +159,7 @@ function WhenToSellPage() {
         <div className="rounded-2xl border bg-card p-4 shadow-2xs space-y-4">
           <div>
             <label className="text-xs font-semibold text-muted-foreground block mb-1">
-              Select Crop
+              {t.chooseCrop}
             </label>
             <CropPicker
               value={selectedCropId}
@@ -166,7 +172,7 @@ function WhenToSellPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t">
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                Reference APMC Mandi
+                {t.referenceMandi}
               </label>
               <select
                 value={selectedMarketId}
@@ -175,7 +181,7 @@ function WhenToSellPage() {
               >
                 {MARKETS.filter((m) => m.kind === "mandi").map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.names.en} ({m.district}, {m.state})
+                    {m.names[s.lang] ?? m.names.en} ({m.district}, {m.state})
                   </option>
                 ))}
               </select>
@@ -183,7 +189,7 @@ function WhenToSellPage() {
 
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                Harvest Quantity in Quintals
+                {t.harvestQuantity}
               </label>
               <input
                 type="number"
@@ -204,7 +210,7 @@ function WhenToSellPage() {
                 onChange={(e) => setHasUrgentCashNeed(e.target.checked)}
                 className="size-4 rounded text-primary"
               />
-              <span>I have urgent cash requirements (loans / bills)</span>
+              <span>{t.urgentCashNeed}</span>
             </label>
 
             <label className="flex items-center gap-2 rounded-xl border bg-muted/20 p-2.5 font-semibold text-foreground cursor-pointer select-none">
@@ -214,7 +220,7 @@ function WhenToSellPage() {
                 onChange={(e) => setHasGoodVentilatedStorage(e.target.checked)}
                 className="size-4 rounded text-primary"
               />
-              <span>I have dry, rodent-safe ventilated storage available</span>
+              <span>{t.safeStorageAvailable}</span>
             </label>
           </div>
         </div>
@@ -235,10 +241,10 @@ function WhenToSellPage() {
 
             <div className="text-left sm:text-right">
               <span className="block text-xs text-muted-foreground font-semibold">
-                Latest Modal Price
+                {t.latestModalPrice}
               </span>
               <span className="font-display text-2xl font-extrabold text-foreground">
-                ₹{currentPrice} / quintal
+                ₹{currentPrice} / {t.quintal}
               </span>
             </div>
           </div>
@@ -250,30 +256,30 @@ function WhenToSellPage() {
           {/* Transparent Moving Average Comparison Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
             <div className="rounded-xl border bg-card p-3">
-              <span className="block text-[11px] text-muted-foreground">3-Day Average</span>
+              <span className="block text-[11px] text-muted-foreground">{t.threeDayAvg}</span>
               <span className="text-base font-extrabold text-foreground">
-                {advisory.average3Day ? `₹${advisory.average3Day}/q` : "N/A"}
+                {advisory.average3Day ? `₹${advisory.average3Day}/q` : t.empty}
               </span>
             </div>
 
             <div className="rounded-xl border bg-card p-3">
-              <span className="block text-[11px] text-muted-foreground">7-Day Average</span>
+              <span className="block text-[11px] text-muted-foreground">{t.sevenDayAvg}</span>
               <span className="text-base font-extrabold text-foreground">
-                {advisory.average7Day ? `₹${advisory.average7Day}/q` : "N/A"}
+                {advisory.average7Day ? `₹${advisory.average7Day}/q` : t.empty}
               </span>
             </div>
 
             <div className="rounded-xl border bg-card p-3">
-              <span className="block text-[11px] text-muted-foreground">Safe Farm Shelf Life</span>
+              <span className="block text-[11px] text-muted-foreground">{t.safeShelfLife}</span>
               <span className="text-base font-extrabold text-foreground">
-                {crop.shelfNormal} days max
+                {crop.shelfNormal} {t.daysUnit}
               </span>
             </div>
 
             <div className="rounded-xl border bg-card p-3">
-              <span className="block text-[11px] text-muted-foreground">Est. Holding Cost</span>
+              <span className="block text-[11px] text-muted-foreground">{t.estimatedHoldingCost}</span>
               <span className="text-base font-extrabold text-foreground">
-                ₹{advisory.estimatedStorageCostPerDay}/day
+                ₹{advisory.estimatedStorageCostPerDay} / {t.perDayUnit}
               </span>
             </div>
           </div>
@@ -284,12 +290,9 @@ function WhenToSellPage() {
           <div className="flex items-start gap-3 rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-xs text-destructive">
             <AlertTriangle className="size-5 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <h3 className="font-bold">High Perishability Warning: Do Not Hold</h3>
+              <h3 className="font-bold">{t.highPerishabilityWarning}</h3>
               <p className="leading-relaxed">
-                {crop.name} is a highly perishable commodity with high moisture content. Holding
-                produce in farm sheds for speculative future price rises leads to shrinkage, rot,
-                and severe market dockage. Agricultural extension guidelines recommend immediate
-                marketing.
+                {fmt(t.perishabilityWarningBody, { crop: crop.localizedNames[s.lang] ?? crop.name })}
               </p>
             </div>
           </div>
@@ -299,14 +302,10 @@ function WhenToSellPage() {
         <section className="rounded-2xl border border-amber-300/80 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-800/50 p-4 text-xs text-amber-950 dark:text-amber-200 space-y-2">
           <div className="flex items-center gap-1.5 font-bold">
             <ShieldAlert className="size-4 text-amber-700 dark:text-amber-400 shrink-0" />
-            <span>Important Advisory Disclaimer & Methodology</span>
+            <span>{t.advisoryMethodologyTitle}</span>
           </div>
           <p className="leading-relaxed">
-            Historical moving averages reflect past recorded arrivals and{" "}
-            <strong>do not guarantee future price movements</strong>. Agricultural markets are
-            subject to sudden shifts in weather, inter-state arrivals, transport bottlenecks, and
-            festival demand. Always verify today's prevailing spot bids at your local APMC yard
-            before making a dispatch commitment.
+            {t.advisoryMethodologyBody}
           </p>
         </section>
       </div>

@@ -21,6 +21,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Page } from "@/components/AppShell";
 import { approximateRoadKm, rupees } from "@/lib/calc";
 import { MARKETS, TRANSPORT_VEHICLES, type TransportVehicleOption } from "@/lib/data";
+import { fmt } from "@/lib/i18n";
 import { useSettings } from "@/lib/store";
 
 export const Route = createFileRoute("/transport")({
@@ -129,9 +130,7 @@ function TransportCoordinationPage() {
     setRequests(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
-    setSubmittedMsg(
-      `Transport request #${newReq.id} recorded. Share details with village transporter.`,
-    );
+    setSubmittedMsg(fmt(t.transportRequestSaved, { id: newReq.id }));
     setTimeout(() => setSubmittedMsg(null), 4000);
   };
 
@@ -148,8 +147,7 @@ function TransportCoordinationPage() {
               </h1>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Match vehicle capacity, compare driver freight quotes, and pool vehicle loads with
-              neighbors.
+              {t.transportPoolingDesc}
             </p>
           </div>
         </div>
@@ -158,13 +156,10 @@ function TransportCoordinationPage() {
         <div className="rounded-2xl border border-amber-300/80 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-800/50 p-3.5 text-xs text-amber-950 dark:text-amber-200 space-y-1">
           <div className="flex items-center gap-1.5 font-bold">
             <ShieldAlert className="size-4 text-amber-700 dark:text-amber-400 shrink-0" />
-            <span>Transport Quotation & Booking Verification Transparency</span>
+            <span>{t.transportFreight}</span>
           </div>
           <p className="leading-relaxed">
-            Distances shown are approximate straight-line × 1.3 road estimates, not live satellite
-            routing. Prices displayed are standard regional benchmarks or farmer-entered driver
-            quotes. A vehicle is <strong>never confirmed booked</strong> until direct arrangement
-            with a verified transporter.
+            {t.approxDistanceNotice} {t.disclaimer}
           </p>
         </div>
 
@@ -181,13 +176,13 @@ function TransportCoordinationPage() {
           className="rounded-3xl border bg-card p-5 shadow-2xs space-y-4"
         >
           <h2 className="font-display text-base font-bold text-foreground">
-            Plan Market Freight & Vehicle Hire
+            {t.transportPlanTitle}
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Origin Village / Farm Gate
+                {t.originFarm}
               </label>
               <input
                 type="text"
@@ -200,7 +195,7 @@ function TransportCoordinationPage() {
 
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Destination APMC Mandi
+                {t.destinationMandi}
               </label>
               <select
                 value={destMandiId}
@@ -209,7 +204,7 @@ function TransportCoordinationPage() {
               >
                 {MARKETS.filter((m) => m.kind === "mandi").map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.names.en} ({m.district}, {m.state})
+                    {m.names[s.lang] ?? m.names.en} ({m.district}, {m.state})
                   </option>
                 ))}
               </select>
@@ -219,7 +214,7 @@ function TransportCoordinationPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Your Produce Quantity (Quintals)
+                {t.quantity} ({t.quintal})
               </label>
               <input
                 type="number"
@@ -232,7 +227,7 @@ function TransportCoordinationPage() {
 
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Vehicle Type Needed
+                {t.vehicleNeeded}
               </label>
               <select
                 value={selectedVehicleId}
@@ -241,7 +236,7 @@ function TransportCoordinationPage() {
               >
                 {TRANSPORT_VEHICLES.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.name} (Cap: {v.capacityQuintals}q)
+                    {v.name} ({t.capacityCheck}: {v.capacityQuintals}q)
                   </option>
                 ))}
               </select>
@@ -249,7 +244,7 @@ function TransportCoordinationPage() {
 
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Preferred Travel Date
+                {t.dateLabel}
               </label>
               <input
                 type="date"
@@ -264,11 +259,11 @@ function TransportCoordinationPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2 border-t">
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Transporter Quoted Price (Optional ₹)
+                {t.quotedTransportPrice}
               </label>
               <input
                 type="number"
-                placeholder="Leave blank to use distance benchmark"
+                placeholder={t.rate}
                 value={manualQuotedPrice}
                 onChange={(e) => setManualQuotedPrice(e.target.value)}
                 className="h-10 w-full rounded-xl border bg-background px-3 font-bold"
@@ -283,22 +278,22 @@ function TransportCoordinationPage() {
                   onChange={(e) => setIsSharedPool(e.target.checked)}
                   className="size-4 rounded text-primary"
                 />
-                <span>Enable group load-sharing (split freight with neighbors)</span>
+                <span>{t.enableLoadSharing}</span>
               </label>
 
               {isSharedPool && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-muted-foreground text-[11px]">
-                    Number of pooling farmers:
+                    {t.poolingFarmers}
                   </span>
                   <select
                     value={poolPartnersCount}
                     onChange={(e) => setPoolPartnersCount(Number(e.target.value))}
                     className="h-8 rounded-lg border bg-background px-2 font-bold"
                   >
-                    <option value={2}>2 Farmers (50% split)</option>
-                    <option value={3}>3 Farmers (33% split)</option>
-                    <option value={4}>4 Farmers (25% split)</option>
+                    <option value={2}>2 · 50%</option>
+                    <option value={3}>3 · 33%</option>
+                    <option value={4}>4 · 25%</option>
                   </select>
                 </div>
               )}
@@ -309,13 +304,13 @@ function TransportCoordinationPage() {
           <div className="rounded-2xl bg-muted/40 p-4 space-y-3 text-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
               <span className="text-muted-foreground">
-                Approx. Distance: <strong>{approxDistanceKm} km</strong> · Vehicle:{" "}
+                {t.approxDistanceNotice}: <strong>{approxDistanceKm} {t.km}</strong> · {t.vehicleNeeded}:{" "}
                 <strong>{vehicle.name}</strong>
               </span>
               <span className="text-muted-foreground">
-                Capacity Check:{" "}
+                {t.capacityCheck}:{" "}
                 <strong>
-                  {produceQtyQuintals}q of {vehicle.capacityQuintals}q capacity
+                  {produceQtyQuintals}q / {vehicle.capacityQuintals}q
                 </strong>
               </span>
             </div>
@@ -323,13 +318,13 @@ function TransportCoordinationPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div className="rounded-xl border bg-card p-3">
                 <span className="block text-[10px] text-muted-foreground">
-                  Individual Solo Freight
+                  {t.transportCost}
                 </span>
                 <span className="text-base font-extrabold text-foreground">
                   {rupees(userEnteredOrEstSolo)}
                 </span>
                 <span className="block text-[10px] text-muted-foreground">
-                  ₹{Math.round(userEnteredOrEstSolo / produceQtyQuintals)} / quintal
+                  ₹{Math.round(userEnteredOrEstSolo / produceQtyQuintals)} / {t.quintal}
                 </span>
               </div>
 
@@ -337,31 +332,31 @@ function TransportCoordinationPage() {
                 <>
                   <div className="rounded-xl border bg-card p-3 border-emerald-500/60 bg-emerald-50/30 dark:bg-emerald-950/20">
                     <span className="block text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
-                      Shared Pool Cost Per Farmer
+                      {t.sharedCost}
                     </span>
                     <span className="text-base font-extrabold text-emerald-700 dark:text-emerald-400">
                       {rupees(sharedCostPerFarmer)}
                     </span>
                     <span className="block text-[10px] text-muted-foreground">
-                      Split between {poolPartnersCount} farmers
+                      {fmt(t.splitBetweenFarmers, { count: poolPartnersCount })}
                     </span>
                   </div>
 
                   <div className="rounded-xl border bg-card p-3 bg-emerald-500/10">
                     <span className="block text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
-                      Your Estimated Savings
+                      {t.estimatedSavings}
                     </span>
                     <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">
-                      +{rupees(estimatedSavings)} saved
+                      +{rupees(estimatedSavings)} {t.save}
                     </span>
                     <span className="block text-[10px] text-muted-foreground">
-                      Lower marketing deduction
+                      {t.marketingCost}
                     </span>
                   </div>
                 </>
               ) : (
                 <div className="sm:col-span-2 flex items-center justify-center p-3 text-muted-foreground text-center">
-                  Enable shared load-pooling above to calculate freight savings with neighbors.
+                  {t.enableLoadSharing}
                 </div>
               )}
             </div>
@@ -372,7 +367,7 @@ function TransportCoordinationPage() {
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
           >
             <Plus className="size-4" />
-            <span>Record Transport Quotation / Pool Request</span>
+            <span>{t.submitRequest}</span>
           </button>
         </form>
 
@@ -381,7 +376,7 @@ function TransportCoordinationPage() {
           <section className="rounded-3xl border bg-card p-5 shadow-2xs space-y-3">
             <h3 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
               <FileText className="size-4 text-primary" />
-              Recorded Transport Requests & Quotes ({requests.length})
+              {fmt(t.recordedTransportRequests, { n: requests.length })}
             </h3>
 
             <div className="space-y-2.5">

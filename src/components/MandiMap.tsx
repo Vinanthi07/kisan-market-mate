@@ -1,7 +1,8 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useRef } from "react";
-import type { Ranked } from "@/lib/calc";
+import type { CandidateMarketRecord } from "@/lib/calc";
+import { useSettings } from "@/lib/store";
 
 // Lazy-loaded (see sell route) so Leaflet stays out of the main bundle.
 export default function MandiMap({
@@ -11,10 +12,11 @@ export default function MandiMap({
   onSelect,
 }: {
   center: [number, number];
-  items: Ranked[];
+  items: CandidateMarketRecord[];
   selected: string | null;
   onSelect: (id: string) => void;
 }) {
+  const { t } = useSettings();
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
@@ -77,7 +79,7 @@ export default function MandiMap({
       ref={el}
       className="h-72 w-full overflow-hidden rounded-2xl border"
       role="application"
-      aria-label="Map of mandis"
+      aria-label={t.mapOfMandis}
     />
   );
 }

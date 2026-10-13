@@ -48,8 +48,7 @@ function HelpAboutPage() {
             </h1>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Platform mission, public agricultural data integrations, mathematical models and user
-            privacy standards.
+            {t.helpSources}
           </p>
         </div>
 
@@ -62,16 +61,13 @@ function HelpAboutPage() {
             <div>
               <h2 className="font-display text-lg font-black text-foreground">KisanSaathi</h2>
               <p className="text-xs font-bold text-primary">
-                Right Market. Right Time. Better Income.
+                {t.tagline}
               </p>
             </div>
           </div>
 
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            KisanSaathi is an open, mobile-first agricultural decision intelligence web application
-            created for small and marginal farmers, farmer producer organizations (FPOs), produce
-            sellers, and warehouse operators across India. The application bridges the gap between
-            terminal mandi prices and actual farm-gate net returns.
+            {t.heroDescription}
           </p>
         </section>
 
@@ -80,14 +76,13 @@ function HelpAboutPage() {
           <div className="flex items-center gap-2 border-b pb-3">
             <Database className="size-5 text-primary" />
             <h2 className="font-display text-base font-bold text-foreground">
-              Agricultural Data Sources & API Architecture
+              {t.dataTransparency}
             </h2>
           </div>
 
           <div className="space-y-3 text-xs leading-relaxed text-muted-foreground">
             <p>
-              KisanSaathi is designed to integrate with the official agricultural market
-              intelligence datasets published by the Government of India:
+              {t.dataIntegrationNote}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
@@ -141,13 +136,10 @@ function HelpAboutPage() {
             <div className="rounded-2xl border border-amber-300/80 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-800/50 p-3.5 space-y-1 text-amber-950 dark:text-amber-200">
               <span className="font-bold flex items-center gap-1.5">
                 <ShieldAlert className="size-4 text-amber-700 dark:text-amber-400" />
-                Demonstration Mode Transparency
+                {t.dataTransparency}
               </span>
               <p>
-                When API keys or network connections to government servers are unavailable,
-                KisanSaathi operates in an explicitly labelled <strong>DEMO Mode</strong> using
-                deterministic historical seasonal distributions. At no time are demo records
-                misrepresented as live quotations.
+                {t.demoNotice}
               </p>
             </div>
           </div>
@@ -158,14 +150,14 @@ function HelpAboutPage() {
           <div className="flex items-center gap-2 border-b pb-3">
             <Scale className="size-5 text-primary" />
             <h2 className="font-display text-base font-bold text-foreground">
-              Mathematical Decision Models & Formulas
+              {t.disclaimer}
             </h2>
           </div>
 
           <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
             <div className="rounded-2xl bg-muted/30 p-4 space-y-2">
               <h3 className="font-bold text-sm text-foreground">
-                1. Best Market Net Proceeds Formula
+                1. {t.netProceeds}
               </h3>
               <div className="rounded-xl bg-card border p-3 font-mono font-bold text-foreground text-center text-xs sm:text-sm">
                 Net Proceeds = (Price × Quantity) − Transport − Mandi Fees − Loading − Packaging −
@@ -202,7 +194,7 @@ function HelpAboutPage() {
           <div className="flex items-center gap-2 border-b pb-3">
             <Shield className="size-5 text-primary" />
             <h2 className="font-display text-base font-bold text-foreground">
-              Security, Privacy & Offline PWA Capabilities
+              {t.localDataPrivacy}
             </h2>
           </div>
 
@@ -210,24 +202,20 @@ function HelpAboutPage() {
             <div className="rounded-2xl border bg-muted/20 p-4 space-y-1.5">
               <h4 className="font-bold text-foreground flex items-center gap-1.5">
                 <Lock className="size-4 text-primary" />
-                Data Privacy & Credential Security
+                {t.localDataPrivacy}
               </h4>
               <p>
-                No client-side source files expose secrets or API credentials. User preferences and
-                produce drafts are stored in local browser storage only. GPS location is strictly
-                opt-in and falls back gracefully to manual selection.
+                {t.localDataDescription}
               </p>
             </div>
 
             <div className="rounded-2xl border bg-muted/20 p-4 space-y-1.5">
               <h4 className="font-bold text-foreground flex items-center gap-1.5">
                 <Wifi className="size-4 text-primary" />
-                Progressive Web App (PWA)
+                {t.offline}
               </h4>
               <p>
-                KisanSaathi includes a web app manifest and service worker caching strategy. The
-                core interface, calculators, and previously loaded prices remain accessible even
-                with intermittent rural 2G/3G connectivity.
+                {t.offline}
               </p>
             </div>
           </div>

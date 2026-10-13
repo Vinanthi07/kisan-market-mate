@@ -25,6 +25,7 @@ import { Route as TransportRouteImport } from './routes/transport'
 import { Route as TrendsRouteImport } from './routes/trends'
 import { Route as WhenToSellRouteImport } from './routes/when-to-sell'
 import { Route as WorkshopsRouteImport } from './routes/workshops'
+import { Route as ApiMandiPricesRouteImport } from './routes/api/mandi-prices'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -106,6 +107,11 @@ const WorkshopsRoute = WorkshopsRouteImport.update({
   path: '/workshops',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMandiPricesRoute = ApiMandiPricesRouteImport.update({
+  id: '/api/mandi-prices',
+  path: '/api/mandi-prices',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/trends': typeof TrendsRoute
   '/when-to-sell': typeof WhenToSellRoute
   '/workshops': typeof WorkshopsRoute
+  '/api/mandi-prices': typeof ApiMandiPricesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/trends': typeof TrendsRoute
   '/when-to-sell': typeof WhenToSellRoute
   '/workshops': typeof WorkshopsRoute
+  '/api/mandi-prices': typeof ApiMandiPricesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/trends': typeof TrendsRoute
   '/when-to-sell': typeof WhenToSellRoute
   '/workshops': typeof WorkshopsRoute
+  '/api/mandi-prices': typeof ApiMandiPricesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/trends'
     | '/when-to-sell'
     | '/workshops'
+    | '/api/mandi-prices'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/trends'
     | '/when-to-sell'
     | '/workshops'
+    | '/api/mandi-prices'
   id:
     | '__root__'
     | '/'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/trends'
     | '/when-to-sell'
     | '/workshops'
+    | '/api/mandi-prices'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -236,6 +248,7 @@ export interface RootRouteChildren {
   TrendsRoute: typeof TrendsRoute
   WhenToSellRoute: typeof WhenToSellRoute
   WorkshopsRoute: typeof WorkshopsRoute
+  ApiMandiPricesRoute: typeof ApiMandiPricesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkshopsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mandi-prices': {
+      id: '/api/mandi-prices'
+      path: '/api/mandi-prices'
+      fullPath: '/api/mandi-prices'
+      preLoaderRoute: typeof ApiMandiPricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -372,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrendsRoute: TrendsRoute,
   WhenToSellRoute: WhenToSellRoute,
   WorkshopsRoute: WorkshopsRoute,
+  ApiMandiPricesRoute: ApiMandiPricesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

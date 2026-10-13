@@ -114,8 +114,10 @@ The application prominently displays the following warning banner on all relevan
 
 ## Data Sources & Demonstration Standard
 
-- **Live Government API Disclosure**: Direct server-to-server integration with Agmarknet / data.gov.in requires registered API keys. In local and demonstration environments, records are drawn from realistic, verified regional baseline benchmarks.
-- **Explicit DEMO Badging**: All simulated APMC price records, buyer postings, fertilizer batches, and workshop listings are explicitly badged with yellow/amber **DEMO** markers. The app never fabricates live retrieval timestamps or presents simulated figures as live quotes.
+- **Agmarknet / data.gov.in connection**: The Mandi Prices screen requests live commodity records through the server-only `/api/mandi-prices` proxy. The proxy uses the data.gov.in resource for current daily mandi prices and never returns the API key to the client.
+- **Configure the secret**: Register for a data.gov.in API key. For local PowerShell, set `$env:DATA_GOV_IN_API_KEY = "your-key"` in the same terminal before starting `pnpm dev`. For Cloudflare Workers, configure it as a secret with `npx wrangler secret put DATA_GOV_IN_API_KEY`. Do not use a `VITE_` prefix or commit the key.
+- **Safe fallback**: If the secret is missing, the upstream API fails, or no matching records are returned, the screen shows clearly marked DEMO benchmark records and explains why. Live data is badged separately and includes the upstream arrival date.
+- **Other DEMO content**: Buyer postings, fertilizer batches, and workshop listings are demonstration data and remain explicitly badged.
 
 ---
 
@@ -135,12 +137,14 @@ cd kisan-market-mate-main
 # 2. Install all dependencies cleanly
 pnpm install
 
-# 3. Create your local environment configuration
+# 3. Copy public configuration defaults (optional)
 cp .env.example .env
 
 # 4. Start the development server
 pnpm dev
 ```
+
+To use live Agmarknet data on Windows, set the `DATA_GOV_IN_API_KEY` secret in the PowerShell terminal first; see [Data Sources & Demonstration Standard](#data-sources--demonstration-standard).
 
 The application will launch at `http://localhost:3000`.
 

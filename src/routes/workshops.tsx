@@ -19,6 +19,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Page } from "@/components/AppShell";
 import { DEMO_WORKSHOPS, type WorkshopSession } from "@/lib/data";
+import { fmt } from "@/lib/i18n";
 import { useSettings } from "@/lib/store";
 
 export const Route = createFileRoute("/workshops")({
@@ -86,11 +87,11 @@ function FarmerWorkshopsPage() {
 
     const cleanPhone = attendeePhone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
-      setFormError("Please enter a valid 10-digit mobile number.");
+      setFormError(t.invalidPhoneError);
       return;
     }
     if (!attendeeName.trim()) {
-      setFormError("Please enter the attendee name.");
+      setFormError(t.attendeeNameError);
       return;
     }
 
@@ -126,8 +127,7 @@ function FarmerWorkshopsPage() {
               </h1>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Agricultural extension training on price awareness, cost accounting, composting and
-              safe storage.
+              {t.workshopIntro}
             </p>
           </div>
         </div>
@@ -135,11 +135,11 @@ function FarmerWorkshopsPage() {
         {/* Categories Bar */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs">
           {[
-            { id: "all", label: "All Topics" },
-            { id: "mandi_awareness", label: "Mandi Price Awareness" },
-            { id: "organic_manure", label: "Compost & Bio-fertilizer" },
-            { id: "post_harvest_storage", label: "Grain Storage & Hygiene" },
-            { id: "cost_accounting", label: "Cost & Budgeting" },
+            { id: "all", label: t.topicAll },
+            { id: "mandi_awareness", label: t.topicMandiAwareness },
+            { id: "organic_manure", label: t.topicCompost },
+            { id: "post_harvest_storage", label: t.topicGrainStorage },
+            { id: "cost_accounting", label: t.topicCostBudgeting },
           ].map((c) => (
             <button
               key={c.id}
@@ -162,7 +162,7 @@ function FarmerWorkshopsPage() {
             <div className="flex items-center justify-between">
               <span className="font-bold flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 text-sm">
                 <CheckCircle2 className="size-5" />
-                Registration Confirmed! Token #{successConfirmation.id}
+                {fmt(t.registrationConfirmed, { id: successConfirmation.id })}
               </span>
               <button
                 type="button"
@@ -173,10 +173,12 @@ function FarmerWorkshopsPage() {
               </button>
             </div>
             <p>
-              Successfully booked {successConfirmation.numAttendees} seat(s) for{" "}
-              <strong>{successConfirmation.workshopTitle}</strong> under name{" "}
-              <strong>{successConfirmation.attendeeName}</strong> (
-              {successConfirmation.attendeePhone}). Stored in your local profile.
+              {fmt(t.registrationDetails, {
+                count: successConfirmation.numAttendees,
+                workshop: successConfirmation.workshopTitle,
+                name: successConfirmation.attendeeName,
+                phone: successConfirmation.attendeePhone,
+              })}
             </p>
           </div>
         )}
@@ -185,10 +187,9 @@ function FarmerWorkshopsPage() {
         {filteredSessions.length === 0 ? (
           <div className="rounded-3xl border bg-card p-10 text-center space-y-2">
             <GraduationCap className="size-10 text-muted-foreground mx-auto" />
-            <h3 className="font-bold text-foreground text-sm">No sessions available yet.</h3>
+            <h3 className="font-bold text-foreground text-sm">{t.noSessions}</h3>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              No genuine training programs currently configured for this category. New sessions from
-              Krishi Vigyan Kendra will appear here.
+              {t.workshopEmptyBody}
             </p>
           </div>
         ) : (
@@ -222,7 +223,7 @@ function FarmerWorkshopsPage() {
                       <p className="flex items-center gap-1.5">
                         <Users className="size-3.5 text-primary shrink-0" />
                         <span>
-                          <strong>Organizer:</strong> {session.organizer}
+                          <strong>{t.organizer}</strong> {session.organizer}
                         </span>
                       </p>
                       <p className="flex items-center gap-1.5">
@@ -246,7 +247,7 @@ function FarmerWorkshopsPage() {
                     {isRegistered ? (
                       <div className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 p-2 text-xs font-bold text-emerald-800 dark:text-emerald-200">
                         <Check className="size-4" />
-                        <span>You are registered for this session</span>
+                        <span>{t.alreadyRegistered}</span>
                       </div>
                     ) : (
                       <button
@@ -255,7 +256,7 @@ function FarmerWorkshopsPage() {
                         className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
                       >
                         <Ticket className="size-4" />
-                        <span>Register Free</span>
+                        <span>{t.registerFree}</span>
                       </button>
                     )}
                   </div>
@@ -270,7 +271,7 @@ function FarmerWorkshopsPage() {
           <section className="rounded-3xl border bg-card p-5 shadow-2xs space-y-3">
             <h3 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
               <Ticket className="size-4 text-primary" />
-              My Saved Workshop Registrations ({myRegistrations.length})
+              {fmt(t.savedRegistrations, { n: myRegistrations.length })}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {myRegistrations.map((r) => (
@@ -282,7 +283,7 @@ function FarmerWorkshopsPage() {
                     </span>
                   </div>
                   <p className="text-muted-foreground">
-                    Attendee: {r.attendeeName} ({r.numAttendees} seat) · Village: {r.village}
+                    {t.attendee} {r.attendeeName} ({r.numAttendees} {t.seat}) · {t.villageLabel} {r.village}
                   </p>
                 </div>
               ))}
@@ -297,7 +298,7 @@ function FarmerWorkshopsPage() {
               <div className="flex items-center justify-between border-b pb-3">
                 <div>
                   <h3 className="font-display text-base font-bold text-foreground">
-                    Register for Workshop
+                    {t.workshopRegistrationTitle}
                   </h3>
                   <p className="text-xs text-muted-foreground truncate max-w-xs">
                     {selectedWorkshop.title}
@@ -322,7 +323,7 @@ function FarmerWorkshopsPage() {
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Farmer / Attendee Name *
+                    {t.farmerAttendeeName}
                   </label>
                   <input
                     type="text"
@@ -335,7 +336,7 @@ function FarmerWorkshopsPage() {
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Mobile Phone (10 Digits) *
+                    {t.mobilePhone10}
                   </label>
                   <input
                     type="tel"
@@ -349,7 +350,7 @@ function FarmerWorkshopsPage() {
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Village / Taluk
+                      {t.village} / {t.talukSubdistrict}
                     </label>
                     <input
                       type="text"
@@ -361,7 +362,7 @@ function FarmerWorkshopsPage() {
 
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Number of Attendees
+                      {t.attendee}
                     </label>
                     <input
                       type="number"
@@ -379,7 +380,7 @@ function FarmerWorkshopsPage() {
                   className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90"
                 >
                   <Check className="size-4" />
-                  <span>Confirm Registration</span>
+                  <span>{t.confirmRegistration}</span>
                 </button>
               </form>
             </div>

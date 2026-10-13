@@ -115,7 +115,7 @@ export function LocationSelector({
 
   const handleUseGps = () => {
     if (!navigator.geolocation) {
-      setGpsError("Geolocation is not supported by your browser. Please select manually.");
+      setGpsError(t.gpsUnsupported);
       return;
     }
 
@@ -132,20 +132,20 @@ export function LocationSelector({
         const loc: Loc = {
           lat,
           lng,
-          state: "Detected (GPS)",
+          state: "__gps_detected__",
           district: `${lat}°, ${lng}°`,
-          village: "Current Location",
+          village: "__current_location__",
         };
         onChange(loc);
         onClose?.();
       },
       (err) => {
         setGpsLoading(false);
-        let msg = "Could not obtain location. Please select your district below.";
+        let msg = t.gpsCouldNot;
         if (err.code === err.PERMISSION_DENIED) {
-          msg = "Location permission was denied. You can select your state and district below.";
+          msg = t.gpsDenied;
         } else if (err.code === err.TIMEOUT) {
-          msg = "Location request timed out. Please select from the list.";
+          msg = t.gpsTimeout;
         }
         setGpsError(msg);
       },
@@ -171,7 +171,7 @@ export function LocationSelector({
               mode === "hierarchy" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground"
             }`}
           >
-            Select List
+            {t.selectList || "Select List"}
           </button>
           <button
             type="button"
@@ -180,7 +180,7 @@ export function LocationSelector({
               mode === "manual" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground"
             }`}
           >
-            Manual Entry
+            {t.manualEntry || "Manual Entry"}
           </button>
         </div>
       </div>
@@ -194,7 +194,7 @@ export function LocationSelector({
           className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary/10 border border-primary/20 px-3 text-sm font-bold text-primary hover:bg-primary/15 transition-colors disabled:opacity-50"
         >
           <LocateFixed className={`size-4 ${gpsLoading ? "animate-spin" : ""}`} />
-          {gpsLoading ? "Detecting location..." : t.useGps || "Use My GPS Location"}
+          {gpsLoading ? t.detectLocation || "Detecting location..." : t.useGpsLocation || "Use My GPS Location"}
         </button>
         {gpsError && (
           <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
@@ -209,7 +209,9 @@ export function LocationSelector({
           {/* Country (Fixed to India with note) */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">Country</label>
+              <label className="text-xs font-semibold text-muted-foreground">
+                {t.country || "Country"}
+              </label>
               <input
                 disabled
                 value="India 🇮🇳"
@@ -254,14 +256,14 @@ export function LocationSelector({
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground">
-                Taluk / Subdistrict
+                {t.talukSubdistrict || "Taluk / Subdistrict"}
               </label>
               <select
                 value={selectedTaluk}
                 onChange={(e) => setSelectedTaluk(e.target.value)}
                 className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-medium text-foreground focus:ring-2 focus:ring-primary"
               >
-                <option value="">(All or nearby)</option>
+                <option value="">({t.allOrNearby})</option>
                 {talukList.map((tl) => (
                   <option key={tl.name} value={tl.name}>
                     {tl.name}
@@ -274,7 +276,7 @@ export function LocationSelector({
           {/* Village / Locality */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground">
-              {t.village || "Village or Locality (Optional)"}
+              {t.villageOrLocality || "Village or Locality (Optional)"}
             </label>
             {villageList.length > 0 ? (
               <select
@@ -282,7 +284,7 @@ export function LocationSelector({
                 onChange={(e) => setSelectedVillage(e.target.value)}
                 className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-medium text-foreground focus:ring-2 focus:ring-primary"
               >
-                <option value="">Select Village</option>
+                <option value="">{t.selectVillage || "Select Village"}</option>
                 {villageList.map((v) => (
                   <option key={v.name} value={v.name}>
                     {v.name}
@@ -292,7 +294,7 @@ export function LocationSelector({
             ) : (
               <input
                 type="text"
-                placeholder="Enter village or panchayat name..."
+                placeholder={t.enterVillage || "Enter village or panchayat name..."}
                 value={selectedVillage}
                 onChange={(e) => setSelectedVillage(e.target.value)}
                 className="h-10 w-full rounded-xl border bg-background px-3 text-sm focus:ring-2 focus:ring-primary"
@@ -306,31 +308,29 @@ export function LocationSelector({
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
           >
             <Check className="size-4" />
-            Set Location: {selectedDistrict}, {selectedState}
+            {t.setLocation || "Set Location"}: {selectedDistrict}, {selectedState}
           </button>
         </div>
       ) : (
         /* Manual Fallback Entry */
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Type your location manually if your state or taluk is not listed in the quick menu.
-          </p>
+          <p className="text-xs text-muted-foreground">{t.manualLocationHint || "Type your location manually if your state or taluk is not listed in the quick menu."}</p>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">State</label>
+              <label className="text-xs font-semibold text-muted-foreground">{t.state}</label>
               <input
                 type="text"
-                placeholder="e.g. Karnataka"
+                placeholder={t.state}
                 value={manualState}
                 onChange={(e) => setManualState(e.target.value)}
                 className="h-10 w-full rounded-xl border bg-background px-3 text-sm focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">District *</label>
+              <label className="text-xs font-semibold text-muted-foreground">{t.district} *</label>
               <input
                 type="text"
-                placeholder="e.g. Belagavi"
+                placeholder={t.district}
                 value={manualDistrict}
                 onChange={(e) => setManualDistrict(e.target.value)}
                 className="h-10 w-full rounded-xl border bg-background px-3 text-sm focus:ring-2 focus:ring-primary"
@@ -339,22 +339,22 @@ export function LocationSelector({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">Taluk / Tehsil</label>
+              <label className="text-xs font-semibold text-muted-foreground">{t.talukSubdistrict}</label>
               <input
                 type="text"
-                placeholder="e.g. Gokak"
+                placeholder={t.talukSubdistrict}
                 value={manualTaluk}
                 onChange={(e) => setManualTaluk(e.target.value)}
                 className="h-10 w-full rounded-xl border bg-background px-3 text-sm focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">
-                Village / Locality
-              </label>
+                <label className="text-xs font-semibold text-muted-foreground">
+                  {t.villageOrLocality}
+                </label>
               <input
                 type="text"
-                placeholder="e.g. Konnur"
+                placeholder={t.villageOrLocality}
                 value={manualVillage}
                 onChange={(e) => setManualVillage(e.target.value)}
                 className="h-10 w-full rounded-xl border bg-background px-3 text-sm focus:ring-2 focus:ring-primary"
@@ -368,7 +368,7 @@ export function LocationSelector({
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             <Check className="size-4" />
-            Save Manual Location
+            {t.saveManualLocation || "Save Manual Location"}
           </button>
         </div>
       )}

@@ -7,8 +7,9 @@ import {
   evaluateWhenToSell,
   rankMarketsByNetProceeds,
 } from "@/lib/calc";
-import { cropById, CROPS, MARKETS } from "@/lib/data";
+import { cropById, CROPS, getMandiPriceRecords, MARKETS } from "@/lib/data";
 import { DICTS, LANGS } from "@/lib/i18n";
+import { assessProcurementQuality, summarizeQualityReviews } from "@/lib/quality";
 
 describe("KisanSaathi Core Formula & Calculation Engine", () => {
   it("computes the master specification example: 100 kg @ ₹30/kg, transport ₹400, other ₹100 => ₹2,500", () => {
@@ -70,6 +71,14 @@ describe("KisanSaathi Core Formula & Calculation Engine", () => {
         transportCost: -50,
       }),
     ).toThrow("Cost components cannot be negative");
+  });
+
+  it("keeps the Kannada locale strings active for the dashboard and settings labels", () => {
+    expect(DICTS.kn.appName).toContain("ಕಿಸಾನ್");
+    expect(DICTS.kn.selectLanguage).toContain("ಭಾಷೆ");
+    expect(DICTS.kn.topRecommendedMarket).toContain("ಮಾರುಕಟ್ಟೆ");
+    expect(DICTS.kn.compareAllMandis).toContain("ಮಂಡಿ");
+    expect(DICTS.kn.exploreEcoGuard).toContain("ಎಕೋ");
   });
 
   describe("Unit Conversions", () => {
@@ -247,5 +256,121 @@ describe("KisanSaathi Core Formula & Calculation Engine", () => {
         expect(dict.lantanaWarning).toBeDefined();
       });
     });
+  });
+
+  it("translates dashboard, settings and market-finder copy in every non-English locale", () => {
+    const visibleKeys = [
+      "heroDescription",
+      "topRecommendedMarket",
+      "coreToolsServices",
+      "searchMinMaxModal",
+      "rankNetProceedsDesc",
+      "priceTrajectoryDesc",
+      "profileIntro",
+      "profileSaved",
+      "manualLocationHint",
+      "saveProfileSettings",
+      "showMandiMap",
+      "hideInteractiveMap",
+      "highestEstimatedNet",
+      "approxPriceForUnit",
+      "costBreakdown",
+      "sellPromptlyAction",
+      "sellPromptlyReason",
+      "advisoryMethodologyBody",
+      "calculatorIntro",
+      "marketSensitivity",
+      "trendIntro",
+      "cropPlanningWorksheet",
+      "workshopIntro",
+      "topicMandiAwareness",
+      "transportPlanTitle",
+      "transportRequestSaved",
+      "buyerIntro",
+      "marketplacePrivacyBody",
+      "postDirectBuyerTitle",
+      "fertilizerIntro",
+      "productQualityNoticeBody",
+      "lantanaModuleBadge",
+      "foodSafetyWarningTitle",
+      "lantanaToxicityWarning",
+      "lantanaStorageTitle",
+    ] as const;
+
+    for (const { code } of LANGS) {
+      if (code === "en") continue;
+      for (const key of visibleKeys) {
+        expect(DICTS[code][key], `${code}.${key} should be translated`).not.toBe(DICTS.en[key]);
+      }
+    }
+  });
+
+  describe("Buyer trust and quality screening", () => {
+    it("requires sample checks before marking a procurement lot ready", () => {
+      const assessment = assessProcurementQuality({
+        category: "cereals_millets",
+        moisturePercent: null,
+        visibleDefectPercent: null,
+        sampleInspected: false,
+      });
+
+      expect(assessment.status).toBe("needs_review");
+      expect(assessment.score).toBe(25);
+      expect(assessment.moistureLimit).toBe(14);
+    });
+
+    it("flags measurements exceeding category screening guidelines", () => {
+      const assessment = assessProcurementQuality({
+        category: "cereals_millets",
+        moisturePercent: 16,
+        visibleDefectPercent: 4,
+        sampleInspected: true,
+      });
+
+      expect(assessment.status).toBe("caution");
+      expect(assessment.checks.find((check) => check.id === "moisture")?.passed).toBe(false);
+      expect(assessment.score).toBe(65);
+    });
+
+    it("marks a measured, inspected lot ready when checks pass", () => {
+      const assessment = assessProcurementQuality({
+        category: "pulses",
+        moisturePercent: 10,
+        visibleDefectPercent: 2,
+        sampleInspected: true,
+      });
+
+      expect(assessment.status).toBe("ready");
+      expect(assessment.score).toBe(100);
+      expect(assessment.moistureLimit).toBe(12);
+    });
+
+    it("summarizes buyer ratings and keeps purchase reports explicitly separate", () => {
+      const summary = summarizeQualityReviews([
+        { id: "1", listingId: "lot", buyerName: "Buyer A", rating: 5, comment: "Good", purchaseReported: true, createdAt: "2026-01-01" },
+        { id: "2", listingId: "lot", buyerName: "Buyer B", rating: 3, comment: "Mixed", purchaseReported: false, createdAt: "2026-01-02" },
+      ]);
+
+      expect(summary).toEqual({ average: 4, count: 2, purchaseReports: 1 });
+      expect(summarizeQualityReviews([])).toEqual({ average: null, count: 0, purchaseReports: 0 });
+    });
+
+    it("provides quality feature labels in every supported language", () => {
+      for (const { code } of LANGS) {
+        if (code === "en") continue;
+        const dict = DICTS[code];
+        expect(dict.procurementQualityTitle, `${code} quality title`).toBeTruthy();
+        expect(dict.qualityPrototypeDisclaimer, `${code} transparency disclaimer`).not.toBe(
+          DICTS.en.qualityPrototypeDisclaimer,
+        );
+        expect(dict.qualityReviewTitle, `${code} review title`).toBeTruthy();
+      }
+    });
+  });
+
+  it("returns demo mandi prices while live API credentials are unavailable", () => {
+    const records = getMandiPriceRecords("tomato");
+    expect(records.length).toBeGreaterThan(0);
+    expect(records.every((record) => record.isDemo)).toBe(true);
   });
 });

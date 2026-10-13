@@ -21,6 +21,7 @@ import {
   Sparkles,
   Sprout,
   Users,
+  X,
 } from "lucide-react";
 import { Page } from "@/components/AppShell";
 import { LANTANA_RESEARCH_STUDIES } from "@/lib/data";
@@ -51,32 +52,30 @@ function LantanaEcoGuardPage() {
           <div className="space-y-3 max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full bg-amber-600/15 border border-amber-600/30 px-3 py-1 text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider">
               <Microscope className="size-3.5" />
-              <span>Independent Educational & Research-Pilot Module</span>
+              <span>{t.lantanaModuleBadge}</span>
             </div>
 
             <h1 className="font-display text-3xl sm:text-4xl font-black text-foreground tracking-tight">
-              Lantana Eco-Guard
+              {t.lantanaTitle}
             </h1>
             <p className="font-display text-base sm:text-lg font-bold text-amber-900 dark:text-amber-300">
-              Learn • Research • Protect Stored Produce
+              {t.lantanaTagline}
             </p>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Educating agricultural stakeholders about the invasive weed <em>Lantana camara</em>,
-              ecological management, peer-reviewed laboratory research on botanical volatiles, and
-              essential standard grain storage hygiene.
+              {t.lantanaIntro}
             </p>
 
             <div className="flex flex-wrap items-center gap-2 pt-2 text-xs font-semibold text-muted-foreground">
               <span className="rounded-lg bg-card border px-2.5 py-1">
-                Farmers & Produce Sellers
+                {t.lantanaAudienceFarmers}
               </span>
               <span className="rounded-lg bg-card border px-2.5 py-1">
-                Grain Warehouses & Godowns
+                {t.lantanaAudienceWarehouses}
               </span>
-              <span className="rounded-lg bg-card border px-2.5 py-1">Rural Households</span>
+              <span className="rounded-lg bg-card border px-2.5 py-1">{t.lantanaAudienceHomes}</span>
               <span className="rounded-lg bg-card border px-2.5 py-1">
-                Livestock & Poultry Owners
+                {t.lantanaAudienceLivestock}
               </span>
             </div>
           </div>
@@ -89,20 +88,15 @@ function LantanaEcoGuardPage() {
         >
           <div className="flex items-center gap-2.5 font-black text-sm uppercase tracking-wide">
             <ShieldAlert className="size-6 shrink-0" />
-            <span>MANDATORY CONSUMER & FOOD SAFETY WARNING</span>
+            <span>{t.foodSafetyWarningTitle}</span>
           </div>
 
           <p className="font-bold text-sm sm:text-base leading-snug">
-            "Experimental Lantana preparations have not been established as safe or effective for
-            food-storage use. Do not place experimental preparations in or near food, stored grain,
-            animal feed, or areas accessible to children, livestock or pets."
+            {t.lantanaWarning}
           </p>
 
           <p className="text-xs text-destructive/90 leading-relaxed pt-1 border-t border-destructive/20">
-            <em>Lantana camara</em> foliage contains toxic pentacyclic triterpenoids (including
-            lantadene A and lantadene B) known to cause hepatotoxicity, jaundice, and
-            photosensitization in ruminants and livestock. Direct contact with food grain meant for
-            human or animal consumption is strictly contraindicated.
+            {t.lantanaToxicityWarning}
           </p>
         </section>
 
@@ -111,7 +105,7 @@ function LantanaEcoGuardPage() {
           <div className="flex items-center gap-2 border-b pb-3">
             <Leaf className="size-5 text-amber-600" />
             <h2 className="font-display text-xl font-bold text-foreground">
-              A. Botanical Profile & Invasive Plant Context
+              {t.lantanaBotanicalTitle}
             </h2>
           </div>
 
@@ -139,7 +133,7 @@ function LantanaEcoGuardPage() {
             <div className="rounded-2xl border bg-muted/30 p-4 space-y-3">
               <h4 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
                 <AlertTriangle className="size-4 text-amber-600" />
-                Responsible Physical Removal & Safe Handling
+                {t.lantanaRemovalTitle}
               </h4>
               <ul className="space-y-2 text-xs text-muted-foreground list-disc list-inside">
                 <li>
@@ -166,14 +160,12 @@ function LantanaEcoGuardPage() {
           <div className="flex items-center gap-2 border-b pb-3">
             <Beaker className="size-5 text-primary" />
             <h2 className="font-display text-xl font-bold text-foreground">
-              B. Published Peer-Reviewed Research Evidence
+              {t.lantanaResearchTitle}
             </h2>
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed">
-            The following summaries detail published scientific investigations from the National
-            Center for Biotechnology Information (NCBI PMC). As required by scientific integrity,
-            findings are reported exactly as published without fabrication or extrapolation.
+            {t.lantanaResearchIntro}
           </p>
 
           <div className="space-y-4">
@@ -251,7 +243,7 @@ function LantanaEcoGuardPage() {
           <div className="flex items-center gap-2 border-b pb-3">
             <Layers className="size-5 text-amber-600" />
             <h2 className="font-display text-xl font-bold text-foreground">
-              C. Research Hypothesis Status (Not a Proven Product)
+              {t.lantanaHypothesisTitle}
             </h2>
           </div>
 
@@ -302,7 +294,7 @@ function LantanaEcoGuardPage() {
           <div className="flex items-center gap-2 border-b pb-3">
             <FileCheck2 className="size-5 text-primary" />
             <h2 className="font-display text-xl font-bold text-foreground">
-              D. Responsible 9-Stage Scientific Research Pipeline
+              {t.lantanaPipelineTitle}
             </h2>
           </div>
 
@@ -376,7 +368,7 @@ function LantanaEcoGuardPage() {
           <div className="flex items-center gap-2 border-b pb-3">
             <ShieldCheck className="size-5 text-emerald-600" />
             <h2 className="font-display text-xl font-bold text-foreground">
-              E. Standard Verified Safe Grain Storage Practices
+              {t.lantanaStorageTitle}
             </h2>
           </div>
 
@@ -445,12 +437,12 @@ function LantanaEcoGuardPage() {
           <div className="flex items-center gap-2 border-b pb-3">
             <GraduationCap className="size-5 text-primary" />
             <h2 className="font-display text-xl font-bold text-foreground">
-              F. Training & Qualified Extension Support
+              {t.lantanaTrainingTitle}
             </h2>
           </div>
 
           <div className="rounded-2xl border border-dashed p-6 text-center space-y-1.5 text-xs text-muted-foreground">
-            <p className="font-bold text-foreground text-sm">No sessions available yet.</p>
+            <p className="font-bold text-foreground text-sm">{t.noSessions}</p>
             <p>
               Certified extension sessions on botanical volatile bio-prospecting and safe storage
               are scheduled via state Agricultural Universities and KVK centers.

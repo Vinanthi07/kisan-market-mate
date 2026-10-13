@@ -21,7 +21,9 @@ import {
   Search,
   Send,
   Shield,
+  ShieldCheck,
   ShieldAlert,
+  Star,
   Sprout,
   Trash2,
   User,
@@ -33,6 +35,12 @@ import { CropArt } from "@/components/CropArt";
 import { CropPicker } from "@/components/CropPicker";
 import { rupees } from "@/lib/calc";
 import { CROPS, cropById, DEMO_BUYERS, type BuyerListing, type CropId } from "@/lib/data";
+import { fmt } from "@/lib/i18n";
+import {
+  assessProcurementQuality,
+  summarizeQualityReviews,
+  type QualityReview,
+} from "@/lib/quality";
 import { useSettings } from "@/lib/store";
 
 export const Route = createFileRoute("/buyers")({
@@ -64,6 +72,9 @@ export interface FarmerProduceListing {
   farmerPhone: string;
   hidePhonePublicly: boolean;
   photoUrl?: string;
+  moisturePercent?: number | null;
+  visibleDefectPercent?: number | null;
+  sampleInspected?: boolean;
   createdAt: string;
   status: "active" | "negotiating" | "sold";
   isDemo: boolean;
@@ -83,6 +94,7 @@ export interface BuyerEnquiry {
 
 const LISTINGS_STORAGE_KEY = "kisansaathi.farmer_listings";
 const ENQUIRIES_STORAGE_KEY = "kisansaathi.buyer_enquiries";
+const QUALITY_REVIEWS_STORAGE_KEY = "kisansaathi.quality_reviews";
 
 function DirectBuyerMarketplacePage() {
   const { s, t } = useSettings();
@@ -103,6 +115,8 @@ function DirectBuyerMarketplacePage() {
     s.loc ? `${s.loc.village || s.loc.district}, ${s.loc.state}` : "Kolar, Karnataka",
   );
   const [postQuality, setPostQuality] = useState<string>("Grade A clean, dry harvest");
+  const [postMoisturePercent, setPostMoisturePercent] = useState("");
+  const [postVisibleDefectPercent, setPostVisibleDefectPercent] = useState("");
   const [postPreferredContact, setPostPreferredContact] = useState<"phone" | "whatsapp" | "in_app">(
     "phone",
   );
@@ -127,6 +141,16 @@ function DirectBuyerMarketplacePage() {
   // Stored Listings & Enquiries
   const [userListings, setUserListings] = useState<FarmerProduceListing[]>([]);
   const [userEnquiries, setUserEnquiries] = useState<BuyerEnquiry[]>([]);
+  const [qualityReviews, setQualityReviews] = useState<QualityReview[]>([]);
+  const [qualityListing, setQualityListing] = useState<FarmerProduceListing | null>(null);
+  const [qualityMoisture, setQualityMoisture] = useState("");
+  const [qualityDefects, setQualityDefects] = useState("");
+  const [qualitySampleInspected, setQualitySampleInspected] = useState(false);
+  const [reviewListing, setReviewListing] = useState<FarmerProduceListing | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewPurchaseReported, setReviewPurchaseReported] = useState(false);
+  const [trustMessage, setTrustMessage] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -134,6 +158,8 @@ function DirectBuyerMarketplacePage() {
       if (stored) setUserListings(JSON.parse(stored));
       const enq = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
       if (enq) setUserEnquiries(JSON.parse(enq));
+      const reviews = localStorage.getItem(QUALITY_REVIEWS_STORAGE_KEY);
+      if (reviews) setQualityReviews(JSON.parse(reviews));
     } catch {
       /* ignore */
     }
@@ -172,7 +198,7 @@ function DirectBuyerMarketplacePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      setFormError("Image file size must be less than 2MB.");
+      setFormError(t.buyerImageTooLarge);
       return;
     }
     const reader = new FileReader();
@@ -189,15 +215,15 @@ function DirectBuyerMarketplacePage() {
 
     const cleanPhone = postPhone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
-      setFormError("Please enter a valid 10-digit mobile number.");
+      setFormError(t.buyerInvalidPhone);
       return;
     }
     if (postQty <= 0) {
-      setFormError("Quantity must be greater than zero.");
+      setFormError(t.buyerInvalidQuantity);
       return;
     }
     if (postPrice <= 0) {
-      setFormError("Expected price must be greater than zero.");
+      setFormError(t.buyerInvalidPrice);
       return;
     }
 
@@ -212,6 +238,9 @@ function DirectBuyerMarketplacePage() {
       harvestDate: postHarvestDate,
       location: postLocation.trim() || "Local Village",
       qualityDescription: postQuality.trim(),
+      moisturePercent: postMoisturePercent === "" ? null : Number(postMoisturePercent),
+      visibleDefectPercent: postVisibleDefectPercent === "" ? null : Number(postVisibleDefectPercent),
+      sampleInspected: false,
       preferredContact: postPreferredContact,
       farmerName: postFarmerName.trim() || "Farmer Member",
       farmerPhone: cleanPhone,
@@ -228,6 +257,8 @@ function DirectBuyerMarketplacePage() {
 
     setIsPostingModalOpen(false);
     setPostPhotoPreview(null);
+    setPostMoisturePercent("");
+    setPostVisibleDefectPercent("");
     setActiveTab("farmer_listings");
   };
 
@@ -238,7 +269,7 @@ function DirectBuyerMarketplacePage() {
 
     const cleanPhone = enquirerPhone.replace(/\D/g, "");
     if (cleanPhone.length < 10) {
-      alert("Please enter a valid 10-digit phone number.");
+      alert(t.buyerInvalidPhone);
       return;
     }
 
@@ -258,7 +289,7 @@ function DirectBuyerMarketplacePage() {
     setUserEnquiries(updated);
     localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(updated));
 
-    setEnquirySuccessMsg(`Enquiry submitted successfully to ${enquiryModalTarget.name}.`);
+    setEnquirySuccessMsg(fmt(t.enquirySuccess, { name: enquiryModalTarget.name }));
     setEnquiryModalTarget(null);
     setTimeout(() => setEnquirySuccessMsg(null), 3000);
   };
@@ -267,6 +298,65 @@ function DirectBuyerMarketplacePage() {
     const updated = userListings.filter((l) => l.id !== id);
     setUserListings(updated);
     localStorage.setItem(LISTINGS_STORAGE_KEY, JSON.stringify(updated));
+  };
+
+  const activeQualityAssessment = qualityListing
+    ? assessProcurementQuality({
+        category: cropById(qualityListing.cropId).category,
+        moisturePercent: qualityMoisture === "" ? null : Number(qualityMoisture),
+        visibleDefectPercent: qualityDefects === "" ? null : Number(qualityDefects),
+        sampleInspected: qualitySampleInspected,
+      })
+    : null;
+
+  const submitQualityReview = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!reviewListing) return;
+    if (reviewRating < 1 || reviewRating > 5) {
+      setTrustMessage(t.reviewRatingRequired);
+      return;
+    }
+    if (!s.farmerName.trim()) {
+      setTrustMessage(t.reviewNameRequired);
+      return;
+    }
+    const review: QualityReview = {
+      id: `review-${Date.now()}`,
+      listingId: reviewListing.id,
+      buyerName: s.farmerName.trim(),
+      rating: reviewRating,
+      comment: reviewComment.trim(),
+      purchaseReported: reviewPurchaseReported,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [review, ...qualityReviews];
+    setQualityReviews(updated);
+    localStorage.setItem(QUALITY_REVIEWS_STORAGE_KEY, JSON.stringify(updated));
+    setReviewListing(null);
+    setReviewRating(0);
+    setReviewComment("");
+    setReviewPurchaseReported(false);
+    setTrustMessage(t.reviewSavedMessage);
+    setTimeout(() => setTrustMessage(null), 3000);
+  };
+
+  const continueFromQualityCheck = () => {
+    if (!qualityListing || !activeQualityAssessment) return;
+    if (activeQualityAssessment.status === "needs_review") {
+      setTrustMessage(t.qualityNeedsReview);
+      return;
+    }
+    if (activeQualityAssessment.status === "caution") {
+      setTrustMessage(t.qualityCaution);
+      return;
+    }
+    setTrustMessage(null);
+    setEnquiryModalTarget({
+      id: qualityListing.id,
+      name: qualityListing.farmerName,
+      cropName: qualityListing.cropName,
+    });
+    setQualityListing(null);
   };
 
   return (
@@ -282,7 +372,7 @@ function DirectBuyerMarketplacePage() {
               </h1>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Connect directly with FPOs, retail aggregators and verified institutional purchasers.
+              {t.buyerIntro}
             </p>
           </div>
 
@@ -292,7 +382,7 @@ function DirectBuyerMarketplacePage() {
             className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors self-start sm:self-auto"
           >
             <Plus className="size-4" />
-            <span>Post Produce for Sale</span>
+            <span>{t.postProduceForSale}</span>
           </button>
         </div>
 
@@ -300,13 +390,10 @@ function DirectBuyerMarketplacePage() {
         <div className="rounded-2xl border border-amber-300/80 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-800/50 p-3.5 text-xs text-amber-950 dark:text-amber-200 space-y-1">
           <div className="flex items-center gap-1.5 font-bold">
             <Shield className="size-4 text-amber-700 dark:text-amber-400 shrink-0" />
-            <span>Marketplace Transparency & Privacy Safeguards</span>
+            <span>{t.marketplacePrivacyTitle}</span>
           </div>
           <p className="leading-relaxed">
-            All prospective buyer requirements below are pre-seeded <strong>DEMO records</strong> to
-            demonstrate interface functionality. Genuine farmer listings are stored locally on your
-            device. KisanSaathi does not process financial escrow or guarantee payments. Always
-            verify buyer credentials and agree on cash/bank terms prior to loading vehicles.
+            {t.marketplacePrivacyBody}
           </p>
         </div>
 
@@ -314,6 +401,12 @@ function DirectBuyerMarketplacePage() {
           <div className="flex items-center gap-2 rounded-xl bg-emerald-100 p-3 text-xs font-bold text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">
             <CheckCircle2 className="size-4 shrink-0" />
             <span>{enquirySuccessMsg}</span>
+          </div>
+        )}
+        {trustMessage && (
+          <div className="flex items-center gap-2 rounded-xl bg-muted p-3 text-xs font-semibold text-foreground">
+            <Info className="size-4 shrink-0 text-primary" />
+            <span>{trustMessage}</span>
           </div>
         )}
 
@@ -329,7 +422,7 @@ function DirectBuyerMarketplacePage() {
             }`}
           >
             <Building2 className="size-4" />
-            <span>Bulk Buyer Demands (DEMO) ({DEMO_BUYERS.length})</span>
+            <span>{t.bulkBuyerDemands.replace("{n}", String(DEMO_BUYERS.length))}</span>
           </button>
 
           <button
@@ -342,7 +435,7 @@ function DirectBuyerMarketplacePage() {
             }`}
           >
             <Sprout className="size-4" />
-            <span>Farmer Produce Listings ({userListings.length})</span>
+            <span>{t.farmerProduceListings.replace("{n}", String(userListings.length))}</span>
           </button>
         </div>
 
@@ -352,7 +445,7 @@ function DirectBuyerMarketplacePage() {
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by buyer name, crop, or district..."
+              placeholder={t.buyerSearchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-10 w-full rounded-xl border bg-background pl-9 pr-3 text-xs focus:ring-2 focus:ring-primary"
@@ -364,7 +457,7 @@ function DirectBuyerMarketplacePage() {
             onChange={(e) => setFilterCrop(e.target.value as CropId | "all")}
             className="h-10 rounded-xl border bg-background px-3 text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary shrink-0 w-full sm:w-auto"
           >
-            <option value="all">All Crops</option>
+            <option value="all">{t.allCrops}</option>
             {CROPS.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -389,7 +482,7 @@ function DirectBuyerMarketplacePage() {
                         <h3 className="text-sm font-bold text-foreground">{b.name}</h3>
                         {b.verifiedFpo && (
                           <span className="rounded bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.2 text-[9px] font-black text-emerald-800 dark:text-emerald-300 uppercase">
-                            FPO Partner
+                            {t.fpoConnect}
                           </span>
                         )}
                       </div>
@@ -407,23 +500,23 @@ function DirectBuyerMarketplacePage() {
 
                 <div className="rounded-xl bg-muted/40 p-2.5 grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <span className="text-[10px] text-muted-foreground block">Offering Price</span>
+                    <span className="text-[10px] text-muted-foreground block">{t.offeringPrice}</span>
                     <span className="font-extrabold text-primary text-sm">
-                      {rupees(b.pricePerQuintal)} / quintal
+                      {rupees(b.pricePerQuintal)} / {t.quintal}
                     </span>
                   </div>
                   <div>
                     <span className="text-[10px] text-muted-foreground block">
-                      Requirement Volume
+                      {t.requirementVolume}
                     </span>
                     <span className="font-bold text-foreground">
-                      ~{b.weeklyRequirementQ} quintals / week
+                      ~{b.weeklyRequirementQ} {t.quintal} / {t.weekly}
                     </span>
                   </div>
                 </div>
 
                 <p className="text-xs text-muted-foreground line-clamp-2">
-                  <span className="font-semibold text-foreground">Quality:</span>{" "}
+                  <span className="font-semibold text-foreground">{t.qualityLabel}</span>{" "}
                   {b.qualityDescription}
                 </p>
 
@@ -434,7 +527,7 @@ function DirectBuyerMarketplacePage() {
                     className="flex-1 flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-primary text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
                   >
                     <Phone className="size-3.5" />
-                    <span>Call Buyer</span>
+                    <span>{t.callBuyer}</span>
                   </a>
 
                   <a
@@ -444,7 +537,7 @@ function DirectBuyerMarketplacePage() {
                     className="flex-1 flex min-h-9 items-center justify-center gap-1.5 rounded-xl border bg-background text-xs font-bold text-foreground hover:bg-muted transition-colors"
                   >
                     <MessageCircle className="size-3.5 text-emerald-600" />
-                    <span>WhatsApp</span>
+                    <span>{t.whatsapp}</span>
                   </a>
 
                   <button
@@ -454,7 +547,7 @@ function DirectBuyerMarketplacePage() {
                     }
                     className="flex min-h-9 items-center justify-center rounded-xl border bg-muted/30 px-3 text-xs font-bold text-foreground hover:bg-muted"
                   >
-                    Enquire
+                    {t.enquire}
                   </button>
                 </div>
               </div>
@@ -468,10 +561,9 @@ function DirectBuyerMarketplacePage() {
             {filteredListings.length === 0 ? (
               <div className="rounded-2xl border bg-card p-8 text-center space-y-3">
                 <Sprout className="size-8 text-muted-foreground mx-auto" />
-                <h3 className="font-bold text-foreground text-sm">No produce listings yet</h3>
+                <h3 className="font-bold text-foreground text-sm">{t.noProduceListings}</h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Be the first to list your harvested grains, vegetables or fruits directly for bulk
-                  buyers.
+                  {t.noProduceListingsBody}
                 </p>
                 <button
                   type="button"
@@ -479,7 +571,7 @@ function DirectBuyerMarketplacePage() {
                   className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground"
                 >
                   <Plus className="size-4" />
-                  <span>Post Your Produce</span>
+                  <span>{t.postYourProduce}</span>
                 </button>
               </div>
             ) : (
@@ -506,7 +598,7 @@ function DirectBuyerMarketplacePage() {
                           type="button"
                           onClick={() => handleDeleteListing(l.id)}
                           className="rounded-lg p-1 text-muted-foreground hover:text-destructive hover:bg-muted"
-                          aria-label="Delete listing"
+                          aria-label={t.deleteListing}
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -516,7 +608,7 @@ function DirectBuyerMarketplacePage() {
                     <div className="rounded-xl bg-muted/40 p-2.5 grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <span className="text-[10px] text-muted-foreground block">
-                          Available Qty
+                          {t.availableQty}
                         </span>
                         <span className="font-bold text-foreground">
                           {l.quantity} {l.unit}
@@ -524,7 +616,7 @@ function DirectBuyerMarketplacePage() {
                       </div>
                       <div>
                         <span className="text-[10px] text-muted-foreground block">
-                          Asking Price
+                          {t.askingPrice}
                         </span>
                         <span className="font-extrabold text-primary text-sm">
                           {rupees(l.expectedPrice)} / {l.unit}
@@ -533,9 +625,67 @@ function DirectBuyerMarketplacePage() {
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                      <span className="font-semibold text-foreground">Quality:</span>{" "}
+                      <span className="font-semibold text-foreground">{t.qualityLabel}</span>{" "}
                       {l.qualityDescription}
                     </p>
+
+                    {(() => {
+                      const listingReviews = qualityReviews.filter((review) => review.listingId === l.id);
+                      const reviewSummary = summarizeQualityReviews(listingReviews);
+                      const quality = assessProcurementQuality({
+                        category: cropById(l.cropId).category,
+                        moisturePercent: l.moisturePercent ?? null,
+                        visibleDefectPercent: l.visibleDefectPercent ?? null,
+                        sampleInspected: l.sampleInspected ?? false,
+                      });
+                      return (
+                        <div className="rounded-xl border bg-muted/20 p-3 space-y-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <span className="font-bold text-foreground">
+                              {t.qualityReviewTitle}: {reviewSummary.average === null ? t.noQualityReviews : `★ ${reviewSummary.average} (${reviewSummary.count})`}
+                            </span>
+                            {reviewSummary.purchaseReports > 0 && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {fmt(t.purchaseReports, { count: reviewSummary.purchaseReports })}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            {quality.status === "ready" ? t.qualityReady : quality.status === "caution" ? t.qualityCaution : t.qualityNeedsReview}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setQualityListing(l);
+                                setQualityMoisture(l.moisturePercent == null ? "" : String(l.moisturePercent));
+                                setQualityDefects(l.visibleDefectPercent == null ? "" : String(l.visibleDefectPercent));
+                                setQualitySampleInspected(false);
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-[11px] font-bold text-primary-foreground"
+                            >
+                              <ShieldCheck className="size-3.5" />
+                              {t.inspectQualityEnquire}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setReviewListing(l)}
+                              className="inline-flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1.5 text-[11px] font-bold text-foreground"
+                            >
+                              <Star className="size-3.5" />
+                              {t.writeQualityReview}
+                            </button>
+                          </div>
+                          {listingReviews.slice(0, 2).map((review) => (
+                            <div key={review.id} className="border-t pt-2 text-[11px]">
+                              <span className="font-semibold">★ {review.rating} · {review.buyerName}</span>
+                              {review.purchaseReported && <span className="ml-1 text-muted-foreground">· {t.purchaseReportedLabel}</span>}
+                              {review.comment && <p className="mt-1 text-muted-foreground">{review.comment}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
 
                     <div className="flex items-center justify-between text-xs pt-2 border-t">
                       <div className="flex items-center gap-1.5">
@@ -546,7 +696,7 @@ function DirectBuyerMarketplacePage() {
                       {l.hidePhonePublicly ? (
                         <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                           <Lock className="size-3 text-amber-600" />
-                          Phone protected (In-app enquiry)
+                          {t.protectedPhone}
                         </span>
                       ) : (
                         <a
@@ -573,7 +723,7 @@ function DirectBuyerMarketplacePage() {
                 <div className="flex items-center gap-2">
                   <Package className="size-5 text-primary" />
                   <h3 className="font-display text-lg font-bold text-foreground">
-                    Post Produce for Direct Buyers
+                    {t.postDirectBuyerTitle}
                   </h3>
                 </div>
                 <button
@@ -595,7 +745,7 @@ function DirectBuyerMarketplacePage() {
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Select Crop
+                    {t.chooseCrop}
                   </label>
                   <CropPicker
                     value={postCrop}
@@ -611,7 +761,7 @@ function DirectBuyerMarketplacePage() {
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Quantity
+                      {t.quantity}
                     </label>
                     <div className="flex items-center gap-1">
                       <input
@@ -627,16 +777,16 @@ function DirectBuyerMarketplacePage() {
                         onChange={(e) => setPostUnit(e.target.value as "quintal" | "kg" | "tonne")}
                         className="h-10 rounded-xl border bg-background px-2 font-semibold"
                       >
-                        <option value="quintal">q</option>
-                        <option value="kg">kg</option>
-                        <option value="tonne">tonne</option>
+                        <option value="quintal">{t.quintal}</option>
+                        <option value="kg">{t.kg}</option>
+                        <option value="tonne">{t.tonne}</option>
                       </select>
                     </div>
                   </div>
 
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Expected Price (₹)
+                      {t.expectedPrice} (₹)
                     </label>
                     <input
                       type="number"
@@ -652,7 +802,7 @@ function DirectBuyerMarketplacePage() {
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Harvest Availability Date
+                      {t.harvestAvailability}
                     </label>
                     <input
                       type="date"
@@ -665,7 +815,7 @@ function DirectBuyerMarketplacePage() {
 
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Location / Village
+                      {t.locationVillage}
                     </label>
                     <input
                       type="text"
@@ -679,21 +829,33 @@ function DirectBuyerMarketplacePage() {
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Quality & Grade Description
+                    {t.qualityDescription}
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Medium size, dry skin, sorted in plastic crates"
+                    placeholder={t.qualityGradePlaceholder}
                     value={postQuality}
                     onChange={(e) => setPostQuality(e.target.value)}
                     className="h-10 w-full rounded-xl border bg-background px-3"
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-2.5 rounded-xl border bg-muted/20 p-3">
+                  <div>
+                    <label htmlFor="seller-moisture" className="mb-1 block font-semibold text-muted-foreground">{t.sellerMoistureDisclosure}</label>
+                    <input id="seller-moisture" type="number" min={0} max={100} step={0.1} value={postMoisturePercent} onChange={(event) => setPostMoisturePercent(event.target.value)} className="h-10 w-full rounded-xl border bg-background px-3" />
+                  </div>
+                  <div>
+                    <label htmlFor="seller-defects" className="mb-1 block font-semibold text-muted-foreground">{t.sellerDefectsDisclosure}</label>
+                    <input id="seller-defects" type="number" min={0} max={100} step={0.1} value={postVisibleDefectPercent} onChange={(event) => setPostVisibleDefectPercent(event.target.value)} className="h-10 w-full rounded-xl border bg-background px-3" />
+                  </div>
+                  <p className="col-span-2 text-[10px] text-muted-foreground">{t.sellerMeasurementDisclosure}</p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Farmer / Contact Name
+                      {t.farmerNameLabel}
                     </label>
                     <input
                       type="text"
@@ -706,7 +868,7 @@ function DirectBuyerMarketplacePage() {
 
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Phone Number (10 Digits)
+                      {t.phone10Digits}
                     </label>
                     <input
                       type="tel"
@@ -726,7 +888,7 @@ function DirectBuyerMarketplacePage() {
                     onChange={(e) => setHidePhone(e.target.checked)}
                     className="size-4 rounded text-primary"
                   />
-                  <span>Protect phone number (Buyers must submit an enquiry first)</span>
+                  <span>{t.protectPhoneEnquiry}</span>
                 </label>
 
                 <button
@@ -734,10 +896,110 @@ function DirectBuyerMarketplacePage() {
                   className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
                 >
                   <Check className="size-4" />
-                  <span>Publish Produce Listing</span>
+                  <span>{t.publishListing}</span>
                 </button>
               </form>
             </div>
+          </div>
+        )}
+
+        {qualityListing && activeQualityAssessment && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+            <section className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border bg-card p-5 shadow-2xl space-y-4">
+              <div className="flex items-start justify-between gap-3 border-b pb-3">
+                <div>
+                  <h3 className="font-display text-lg font-bold text-foreground">
+                    {t.procurementQualityTitle}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {qualityListing.cropName} · {qualityListing.farmerName}
+                  </p>
+                </div>
+                <button type="button" onClick={() => setQualityListing(null)} aria-label={t.closePicker} className="rounded-lg p-1 text-muted-foreground hover:bg-muted">
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              <div className="rounded-xl bg-muted/40 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-bold">{t.qualityScoreLabel}</span>
+                  <span className="font-black">{activeQualityAssessment.score}/100</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-border">
+                  <div className="h-full bg-primary transition-all" style={{ width: `${activeQualityAssessment.score}%` }} />
+                </div>
+                <p className="text-xs font-semibold">
+                  {activeQualityAssessment.status === "ready" ? t.qualityReady : activeQualityAssessment.status === "caution" ? t.qualityCaution : t.qualityNeedsReview}
+                </p>
+              </div>
+
+              {activeQualityAssessment.moistureLimit !== null && (
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-muted-foreground" htmlFor="quality-moisture">
+                    {t.sampleMoisture}
+                  </label>
+                  <input id="quality-moisture" type="number" min={0} max={100} step={0.1} value={qualityMoisture} onChange={(event) => setQualityMoisture(event.target.value)} className="h-10 w-full rounded-xl border bg-background px-3 text-sm" />
+                  <p className="text-[11px] text-muted-foreground">{fmt(t.moistureGuideline, { limit: activeQualityAssessment.moistureLimit })}</p>
+                  <p className="text-[11px] font-medium">{qualityMoisture === "" ? t.qualityMoistureMissing : Number(qualityMoisture) <= activeQualityAssessment.moistureLimit ? t.qualityMoisturePass : t.qualityMoistureFail}</p>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-muted-foreground" htmlFor="quality-defects">
+                  {t.sampleDefects}
+                </label>
+                <input id="quality-defects" type="number" min={0} max={100} step={0.1} value={qualityDefects} onChange={(event) => setQualityDefects(event.target.value)} className="h-10 w-full rounded-xl border bg-background px-3 text-sm" />
+                <p className="text-[11px] text-muted-foreground">{fmt(t.defectGuideline, { limit: activeQualityAssessment.defectLimit })}</p>
+                <p className="text-[11px] font-medium">{qualityDefects === "" ? t.qualityDefectsMissing : Number(qualityDefects) <= activeQualityAssessment.defectLimit ? t.qualityDefectsPass : t.qualityDefectsFail}</p>
+              </div>
+
+              <label className="flex items-start gap-2 rounded-xl border bg-muted/20 p-3 text-xs font-medium">
+                <input type="checkbox" checked={qualitySampleInspected} onChange={(event) => setQualitySampleInspected(event.target.checked)} className="mt-0.5 size-4 rounded text-primary" />
+                <span>{qualitySampleInspected ? t.qualitySamplePass : t.inspectSampleConfirm}</span>
+              </label>
+
+              <p className="rounded-xl border border-amber-300/70 bg-amber-50/60 p-3 text-[11px] leading-relaxed text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                {t.qualityPrototypeDisclaimer}
+              </p>
+
+              <button type="button" onClick={continueFromQualityCheck} disabled={activeQualityAssessment.status !== "ready"} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50">
+                <ShieldCheck className="size-4" />
+                {t.continueAfterQualityCheck}
+              </button>
+            </section>
+          </div>
+        )}
+
+        {reviewListing && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+            <form onSubmit={submitQualityReview} className="w-full max-w-md rounded-3xl border bg-card p-5 shadow-2xl space-y-4">
+              <div className="flex items-start justify-between gap-3 border-b pb-3">
+                <div>
+                  <h3 className="font-display text-lg font-bold">{t.writeQualityReview}</h3>
+                  <p className="text-xs text-muted-foreground">{reviewListing.cropName} · {reviewListing.farmerName}</p>
+                </div>
+                <button type="button" onClick={() => setReviewListing(null)} aria-label={t.closePicker} className="rounded-lg p-1 text-muted-foreground hover:bg-muted"><X className="size-5" /></button>
+              </div>
+              <fieldset>
+                <legend className="mb-2 text-xs font-semibold">{t.ratingLabel}</legend>
+                <div className="flex gap-1" role="radiogroup" aria-label={t.ratingLabel}>
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button key={rating} type="button" role="radio" aria-checked={reviewRating === rating} aria-label={`${rating}/5`} onClick={() => setReviewRating(rating)} className={`rounded-lg p-1 ${rating <= reviewRating ? "text-amber-500" : "text-muted-foreground"}`}>
+                      <Star className="size-7" fill={rating <= reviewRating ? "currentColor" : "none"} />
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="space-y-1">
+                <label htmlFor="quality-review-comment" className="text-xs font-semibold">{t.reviewCommentLabel}</label>
+                <textarea id="quality-review-comment" rows={3} maxLength={500} value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} placeholder={t.reviewCommentPlaceholder} className="w-full rounded-xl border bg-background p-3 text-sm" />
+              </div>
+              <label className="flex items-start gap-2 rounded-xl border bg-muted/20 p-3 text-xs">
+                <input type="checkbox" checked={reviewPurchaseReported} onChange={(event) => setReviewPurchaseReported(event.target.checked)} className="mt-0.5 size-4 rounded text-primary" />
+                <span>{t.purchaseReportedLabel}</span>
+              </label>
+              <button type="submit" className="min-h-11 w-full rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground">{t.submitQualityReview}</button>
+            </form>
           </div>
         )}
 
@@ -748,10 +1010,10 @@ function DirectBuyerMarketplacePage() {
               <div className="flex items-center justify-between border-b pb-3">
                 <div>
                   <h3 className="font-display text-base font-bold text-foreground">
-                    Enquire with {enquiryModalTarget.name}
+                    {fmt(t.enquiryWith, { name: enquiryModalTarget.name })}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Crop: {enquiryModalTarget.cropName}
+                    {t.cropLabel} {enquiryModalTarget.cropName}
                   </p>
                 </div>
                 <button
@@ -766,12 +1028,12 @@ function DirectBuyerMarketplacePage() {
               <form onSubmit={handleSendEnquiry} className="space-y-3 text-xs">
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Your Name
+                    {t.yourName}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Ramesh Patil"
+                    placeholder={t.nameExample}
                     value={enquirerName}
                     onChange={(e) => setEnquirerName(e.target.value)}
                     className="h-10 w-full rounded-xl border bg-background px-3"
@@ -780,12 +1042,12 @@ function DirectBuyerMarketplacePage() {
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Your Mobile Number
+                    {t.yourMobile}
                   </label>
                   <input
                     type="tel"
                     required
-                    placeholder="10-digit number"
+                    placeholder={t.mobilePlaceholder}
                     value={enquirerPhone}
                     onChange={(e) => setEnquirerPhone(e.target.value)}
                     className="h-10 w-full rounded-xl border bg-background px-3 font-bold"
@@ -794,7 +1056,7 @@ function DirectBuyerMarketplacePage() {
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Quantity Offered (Quintals)
+                    {t.quantityOffered}
                   </label>
                   <input
                     type="number"
@@ -807,11 +1069,11 @@ function DirectBuyerMarketplacePage() {
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Message / Notes
+                    {t.messageNotes}
                   </label>
                   <textarea
                     rows={2}
-                    placeholder="Produce ready date, expected rate, or sample availability..."
+                    placeholder={t.enquiryMessagePlaceholder}
                     value={enquiryMessage}
                     onChange={(e) => setEnquiryMessage(e.target.value)}
                     className="w-full rounded-xl border bg-background p-2.5"
@@ -823,7 +1085,7 @@ function DirectBuyerMarketplacePage() {
                   className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90"
                 >
                   <Send className="size-4" />
-                  <span>Submit Direct Enquiry</span>
+                  <span>{t.submitEnquiry}</span>
                 </button>
               </form>
             </div>

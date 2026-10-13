@@ -1,5 +1,5 @@
 import { Mic, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CROPS, CROP_CATEGORIES, type CropCategory, type CropId } from "@/lib/data";
 import { DICTS } from "@/lib/i18n";
 import { useSettings } from "@/lib/store";
@@ -21,7 +21,11 @@ export function CropPicker({
   const [activeCategory, setActiveCategory] = useState<CropCategory | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [listening, setListening] = useState(false);
-  const rec = typeof window !== "undefined" ? getRecognition(s.lang) : null;
+  const [recognitionAvailable, setRecognitionAvailable] = useState(false);
+
+  useEffect(() => {
+    setRecognitionAvailable(Boolean(getRecognition(s.lang)));
+  }, [s.lang]);
 
   const listen = () => {
     const r = getRecognition(s.lang);
@@ -72,7 +76,7 @@ export function CropPicker({
             className="h-10 w-full rounded-xl border bg-background pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
-        {rec && (
+        {recognitionAvailable && (
           <button
             type="button"
             onClick={listen}

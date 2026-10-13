@@ -139,7 +139,7 @@ function BestMarketFinderPage() {
               </h1>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Net proceeds = (Price × Qty) − Transport − Mandi Fees − Loading − Packaging − Spoilage
+              {t.netProceeds} = ({t.price} × {t.quantity}) − {t.transportCost} − {t.marketFee} − {t.handlingFee} − {t.packaging} − {t.spoilageCost}
             </p>
           </div>
 
@@ -151,7 +151,7 @@ function BestMarketFinderPage() {
           {/* Crop Selector */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground block mb-1">
-              Select Crop
+              {t.chooseCrop}
             </label>
             <CropPicker
               value={s.crop}
@@ -168,7 +168,7 @@ function BestMarketFinderPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t">
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                Produce Quantity & Unit
+                {t.quantity}
               </label>
               <div className="flex items-center gap-2">
                 <div className="flex items-center rounded-xl border bg-background overflow-hidden flex-1">
@@ -213,7 +213,7 @@ function BestMarketFinderPage() {
             {/* Freight Rate */}
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                Transport Freight Rate (₹ / quintal / km)
+                {t.rate}
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -234,7 +234,7 @@ function BestMarketFinderPage() {
                     }}
                     className="size-4 rounded text-primary focus:ring-primary"
                   />
-                  <span>Own vehicle (fuel rate ~₹1.2/q/km)</span>
+                  <span>{t.ownVehicleFuelOption}</span>
                 </label>
               </div>
             </div>
@@ -254,8 +254,8 @@ function BestMarketFinderPage() {
               )}
               <span>
                 {showAdvancedCosts
-                  ? "Hide extra cost parameters"
-                  : "Customize handling, packaging & manual transporter quotes"}
+                  ? t.hideExtraCosts
+                  : t.customizeExtraCosts}
               </span>
             </button>
 
@@ -263,7 +263,7 @@ function BestMarketFinderPage() {
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-xl bg-muted/40 p-3 text-xs">
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Loading/Unloading (₹/quintal)
+                    {t.loadingUnloadingPerQuintal}
                   </label>
                   <input
                     type="number"
@@ -275,7 +275,7 @@ function BestMarketFinderPage() {
                 </div>
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Packaging / Crates (₹/quintal)
+                    {t.packagingCratesPerQuintal}
                   </label>
                   <input
                     type="number"
@@ -287,7 +287,7 @@ function BestMarketFinderPage() {
                 </div>
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Other Incidental Expenses (₹)
+                    {t.otherIncidentalExpenses}
                   </label>
                   <input
                     type="number"
@@ -309,21 +309,24 @@ function BestMarketFinderPage() {
               <div className="space-y-1">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white uppercase tracking-wider shadow-xs">
                   <BadgeCheck className="size-4" />
-                  Highest Estimated Net Proceeds
+                  {t.highestEstimatedNet}
                 </span>
                 <h2 className="font-display text-2xl font-extrabold text-foreground">
                   {bestOption.market.names[s.lang] ?? bestOption.market.names.en}
                 </h2>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <MapPin className="size-3.5 text-primary" />
-                  {bestOption.market.district}, {bestOption.market.state} · Approx.{" "}
-                  {bestOption.approximateDistanceKm} km road distance
+                  {bestOption.market.district}, {bestOption.market.state} · {fmt(t.approxPriceForUnit, {
+                    distance: bestOption.approximateDistanceKm,
+                    price: bestOption.expectedPricePerUnit,
+                    unit,
+                  })}
                 </p>
               </div>
 
               <div className="text-left sm:text-right space-y-0.5">
                 <span className="block text-xs font-bold text-muted-foreground">
-                  Estimated Total Net Proceeds
+                  {t.estimatedTotalNetProceeds}
                 </span>
                 <span className="font-display text-3xl font-extrabold text-emerald-700 dark:text-emerald-400">
                   {rupees(bestOption.breakdown.netProceeds)}
@@ -336,9 +339,9 @@ function BestMarketFinderPage() {
 
             {bestOption.diffVsNearestNet !== null && bestOption.diffVsNearestNet > 0 && (
               <div className="rounded-xl bg-emerald-100 dark:bg-emerald-950/60 p-2.5 text-xs text-emerald-900 dark:text-emerald-200 font-bold flex items-center justify-between">
-                <span>Advantage over nearest APMC yard:</span>
+                <span>{t.advantageNearestYard}</span>
                 <span className="text-sm">
-                  +{rupees(bestOption.diffVsNearestNet)} extra in hand
+                  +{rupees(bestOption.diffVsNearestNet)} {t.extraInHand}
                 </span>
               </div>
             )}
@@ -346,25 +349,25 @@ function BestMarketFinderPage() {
             {/* Quick breakdown bars */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-border/80 text-xs">
               <div className="rounded-xl bg-card border p-2">
-                <span className="block text-[10px] text-muted-foreground">Gross Revenue</span>
+                  <span className="block text-[10px] text-muted-foreground">{t.grossRevenue}</span>
                 <span className="font-bold text-foreground">
                   {rupees(bestOption.breakdown.grossRevenue)}
                 </span>
               </div>
               <div className="rounded-xl bg-card border p-2">
-                <span className="block text-[10px] text-muted-foreground">Transport Freight</span>
+                  <span className="block text-[10px] text-muted-foreground">{t.transportCost}</span>
                 <span className="font-bold text-destructive">
                   −{rupees(bestOption.breakdown.transportCost)}
                 </span>
               </div>
               <div className="rounded-xl bg-card border p-2">
-                <span className="block text-[10px] text-muted-foreground">Mandi statutory fee</span>
+                  <span className="block text-[10px] text-muted-foreground">{t.marketFee}</span>
                 <span className="font-bold text-destructive">
                   −{rupees(bestOption.breakdown.marketFees)}
                 </span>
               </div>
               <div className="rounded-xl bg-card border p-2">
-                <span className="block text-[10px] text-muted-foreground">Loading & Spoilage</span>
+                  <span className="block text-[10px] text-muted-foreground">{t.handlingFee} / {t.spoilageCost}</span>
                 <span className="font-bold text-destructive">
                   −
                   {rupees(
@@ -381,7 +384,7 @@ function BestMarketFinderPage() {
         {/* View Toggle (List vs Map) */}
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-foreground">
-            Ranked Candidate Markets ({rankedMarkets.length})
+            {fmt(t.rankedCandidateMarkets, { n: rankedMarkets.length })}
           </h2>
 
           <button
@@ -390,7 +393,7 @@ function BestMarketFinderPage() {
             className="flex items-center gap-1.5 rounded-xl border bg-card px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             <Navigation className="size-3.5 text-primary" />
-            <span>{showMap ? "Hide Interactive Map" : "Show Mandi Map"}</span>
+            <span>{showMap ? t.hideInteractiveMap : t.showMandiMap}</span>
           </button>
         </div>
 
@@ -399,11 +402,16 @@ function BestMarketFinderPage() {
           <Suspense
             fallback={
               <div className="h-64 rounded-2xl border bg-muted flex items-center justify-center text-xs">
-                Loading map...
+                {t.loadingMap}
               </div>
             }
           >
-            <MandiMap />
+            <MandiMap
+              center={userLoc}
+              items={rankedMarkets}
+              selected={selectedMarketId}
+              onSelect={setSelectedMarketId}
+            />
           </Suspense>
         )}
 
@@ -439,20 +447,22 @@ function BestMarketFinderPage() {
                         </h3>
                         {item.isBest && (
                           <span className="rounded bg-emerald-600 px-1.5 py-0.2 text-[10px] font-bold text-white uppercase">
-                            Best
+                            {t.best}
                           </span>
                         )}
                         {item.market.kind === "direct" && (
                           <span className="rounded bg-blue-100 dark:bg-blue-950/80 px-1.5 py-0.2 text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase">
-                            Direct Buyer
+                            {t.directBuyerLabel}
                           </span>
                         )}
                       </div>
 
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {item.market.district}, {item.market.state} · Approx.{" "}
-                        {item.approximateDistanceKm} km road distance · Price: ₹
-                        {item.expectedPricePerUnit}/{unit}
+                        {item.market.district}, {item.market.state} · {fmt(t.approxPriceForUnit, {
+                          distance: item.approximateDistanceKm,
+                          price: item.expectedPricePerUnit,
+                          unit,
+                        })}
                       </p>
                     </div>
                   </div>
@@ -460,7 +470,7 @@ function BestMarketFinderPage() {
                   <div className="flex items-baseline justify-between sm:justify-end gap-4">
                     <div className="text-right">
                       <span className="block text-[10px] text-muted-foreground font-semibold">
-                        Estimated Net Proceeds
+                        {t.netProceeds}
                       </span>
                       <span className="font-display text-lg sm:text-xl font-extrabold text-foreground">
                         {rupees(item.breakdown.netProceeds)}
@@ -471,7 +481,7 @@ function BestMarketFinderPage() {
                       type="button"
                       onClick={() => setSelectedMarketId(isSelected ? null : item.market.id)}
                       className="rounded-xl border bg-muted/30 p-2 text-foreground hover:bg-muted"
-                      aria-label="Toggle cost breakdown"
+                      aria-label={t.toggleCostBreakdown}
                     >
                       {isSelected ? (
                         <ChevronUp className="size-4" />
@@ -487,13 +497,13 @@ function BestMarketFinderPage() {
                   <div className="mt-4 pt-3 border-t space-y-2 text-xs">
                     <h4 className="font-bold text-foreground flex items-center gap-1.5">
                       <Receipt className="size-3.5 text-primary" />
-                      Detailed Cost & Net Calculation Breakdown
+                      {t.costBreakdown}
                     </h4>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-xl bg-muted/40 p-3">
                       <div>
                         <span className="text-muted-foreground block text-[11px]">
-                          Gross Sales Value:
+                          {t.grossRevenue}:
                         </span>
                         <span className="font-bold text-foreground">
                           {quantity} {unit} × ₹{item.expectedPricePerUnit} ={" "}
@@ -502,7 +512,7 @@ function BestMarketFinderPage() {
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">
-                          Transport Freight:
+                          {t.transportCost}:
                         </span>
                         <span className="font-bold text-destructive">
                           −{rupees(item.breakdown.transportCost)} ({item.approximateDistanceKm} km @
@@ -511,7 +521,7 @@ function BestMarketFinderPage() {
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">
-                          Mandi Market Fee:
+                          {t.marketFee}:
                         </span>
                         <span className="font-bold text-destructive">
                           −{rupees(item.breakdown.marketFees)} ({item.market.feePct}% statutory)
@@ -519,7 +529,7 @@ function BestMarketFinderPage() {
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">
-                          Loading & Handling:
+                          {t.handlingFee}:
                         </span>
                         <span className="font-bold text-destructive">
                           −{rupees(item.breakdown.loadingUnloadingCharges)}
@@ -527,7 +537,7 @@ function BestMarketFinderPage() {
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">
-                          Packaging Costs:
+                          {t.packaging}:
                         </span>
                         <span className="font-bold text-destructive">
                           −{rupees(item.breakdown.packagingCosts)}
@@ -535,7 +545,7 @@ function BestMarketFinderPage() {
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">
-                          Transit Spoilage / Other:
+                          {t.spoilageCost}:
                         </span>
                         <span className="font-bold text-destructive">
                           −{rupees(item.breakdown.otherSellingExpenses)}
@@ -544,13 +554,13 @@ function BestMarketFinderPage() {
                     </div>
 
                     <div className="flex items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-2.5 font-bold text-emerald-900 dark:text-emerald-200">
-                      <span>Total Costs: {rupees(item.breakdown.totalCosts)}</span>
-                      <span>Net In-Hand: {rupees(item.breakdown.netProceeds)}</span>
+                      <span>{t.totalCosts}: {rupees(item.breakdown.totalCosts)}</span>
+                      <span>{t.netProceeds}: {rupees(item.breakdown.netProceeds)}</span>
                     </div>
 
                     <div className="flex items-center gap-2 pt-1">
                       <label className="text-[11px] text-muted-foreground">
-                        Have a specific transport quotation for this mandi?
+                        {t.transportQuotePrompt}
                       </label>
                       <input
                         type="number"

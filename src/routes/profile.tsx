@@ -58,12 +58,12 @@ function FarmerProfilePage() {
       myVehicle,
     });
 
-    setSaveMsg("Profile preferences updated successfully.");
+    setSaveMsg(t.profileSaved);
     setTimeout(() => setSaveMsg(null), 3000);
   };
 
   const handleResetData = () => {
-    if (confirm("Reset all saved local data and return to defaults?")) {
+    if (confirm(t.resetConfirm)) {
       localStorage.clear();
       window.location.reload();
     }
@@ -81,8 +81,7 @@ function FarmerProfilePage() {
             </h1>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Manage your agricultural profile, preferred language, home mandi yard, and transport
-            preferences.
+            {t.profileIntro}
           </p>
         </div>
 
@@ -99,13 +98,13 @@ function FarmerProfilePage() {
           className="rounded-3xl border bg-card p-5 sm:p-6 shadow-2xs space-y-5"
         >
           <h2 className="font-display text-base font-bold text-foreground">
-            Personal & Operational Information
+            {t.personalInfo}
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Farmer / Contact Name
+                {t.farmerNameLabel}
               </label>
               <input
                 type="text"
@@ -118,11 +117,11 @@ function FarmerProfilePage() {
 
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Mobile Number (Optional)
+                {t.phoneLabel}
               </label>
               <input
                 type="tel"
-                placeholder="10-digit phone for buyer SMS"
+                placeholder={t.phonePlaceholder}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                 className="h-10 w-full rounded-xl border bg-background px-3 font-bold text-foreground"
@@ -135,21 +134,21 @@ function FarmerProfilePage() {
             <div className="flex items-center justify-between">
               <span className="font-bold text-foreground flex items-center gap-1.5">
                 <MapPin className="size-4 text-primary" />
-                Selected Farm Location
+                {t.selectedFarmLocation}
               </span>
               <button
                 type="button"
                 onClick={() => setShowLocPicker(!showLocPicker)}
                 className="text-xs font-bold text-primary hover:underline"
               >
-                {showLocPicker ? "Close Picker" : "Change Location"}
+                {showLocPicker ? t.closePicker : t.changeLocationShort}
               </button>
             </div>
 
             <p className="text-muted-foreground">
               {s.loc
                 ? `${s.loc.village || s.loc.district}, ${s.loc.district}, ${s.loc.state}`
-                : "No location set"}
+                : t.noLocationSet}
             </p>
 
             {showLocPicker && (
@@ -170,13 +169,13 @@ function FarmerProfilePage() {
           <div className="space-y-3 pt-2 border-t text-xs">
             <h3 className="font-bold text-foreground flex items-center gap-1.5">
               <Truck className="size-4 text-primary" />
-              Transport & Freight Benchmark Rates
+              {t.transportFreight}
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="font-semibold text-muted-foreground block mb-1">
-                  Standard Commercial Freight Rate (₹ / quintal / km)
+                  {t.commercialRate}
                 </label>
                 <input
                   type="number"
@@ -190,7 +189,7 @@ function FarmerProfilePage() {
 
               <div>
                 <label className="font-semibold text-muted-foreground block mb-1">
-                  Own Vehicle Fuel Operating Rate (₹ / quintal / km)
+                  {t.ownVehicleRate}
                 </label>
                 <input
                   type="number"
@@ -210,7 +209,7 @@ function FarmerProfilePage() {
                 onChange={(e) => setMyVehicle(e.target.checked)}
                 className="size-4 rounded text-primary"
               />
-              <span>I primarily use my own tractor / pickup for mandi market transit</span>
+              <span>{t.ownVehiclePrimary}</span>
             </label>
           </div>
 
@@ -219,7 +218,7 @@ function FarmerProfilePage() {
             className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
           >
             <Save className="size-4" />
-            <span>Save Profile Settings</span>
+            <span>{t.saveProfileSettings || "Save Profile Settings"}</span>
           </button>
         </form>
 
@@ -228,7 +227,7 @@ function FarmerProfilePage() {
           <div className="flex items-center gap-2">
             <Languages className="size-5 text-primary" />
             <h2 className="font-display text-base font-bold text-foreground">
-              Application Language (ಇಂಟರ್ಫೇಸ್ ಭಾಷೆ)
+              {t.appLanguage}
             </h2>
           </div>
 
@@ -260,7 +259,7 @@ function FarmerProfilePage() {
         <section className="rounded-3xl border bg-card p-5 shadow-2xs space-y-3 text-xs">
           <h2 className="font-display text-base font-bold text-foreground flex items-center gap-1.5">
             <Sun className="size-4 text-primary" />
-            Appearance Theme
+            {t.appearanceTheme}
           </h2>
 
           <div className="flex items-center gap-3">
@@ -274,7 +273,7 @@ function FarmerProfilePage() {
               }`}
             >
               <Sun className="size-4" />
-              <span>Light Mode</span>
+              <span>{t.lightMode || "Light Mode"}</span>
             </button>
 
             <button
@@ -287,7 +286,7 @@ function FarmerProfilePage() {
               }`}
             >
               <Moon className="size-4" />
-              <span>Dark Mode</span>
+              <span>{t.darkMode || "Dark Mode"}</span>
             </button>
           </div>
         </section>
@@ -296,12 +295,10 @@ function FarmerProfilePage() {
         <section className="rounded-3xl border border-destructive/30 bg-destructive/5 p-5 shadow-2xs space-y-3 text-xs">
           <h2 className="font-bold text-destructive flex items-center gap-1.5">
             <Shield className="size-4" />
-            Local Data & Device Storage
+            {t.localDataPrivacy}
           </h2>
           <p className="text-muted-foreground">
-            All your saved calculations, produce listings, and location preferences are stored
-            securely inside your browser's LocalStorage. No data is sold or shared with external
-            advertising brokers.
+            {t.localDataDescription}
           </p>
           <button
             type="button"
@@ -309,7 +306,7 @@ function FarmerProfilePage() {
             className="flex items-center gap-1.5 rounded-xl border border-destructive/50 bg-card px-3.5 py-2 text-xs font-bold text-destructive hover:bg-destructive hover:text-white transition-colors"
           >
             <Trash2 className="size-3.5" />
-            <span>Reset Local Preferences & Cache</span>
+            <span>{t.resetLocalPrefs}</span>
           </button>
         </section>
       </div>

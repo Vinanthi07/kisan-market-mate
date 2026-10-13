@@ -30,6 +30,7 @@ import { CropArt } from "@/components/CropArt";
 import { CropPicker } from "@/components/CropPicker";
 import { rupees } from "@/lib/calc";
 import { CROPS, cropById, MARKETS, priceSeries, type CropId } from "@/lib/data";
+import { fmt } from "@/lib/i18n";
 import { useSettings } from "@/lib/store";
 
 export const Route = createFileRoute("/trends")({
@@ -89,7 +90,8 @@ function PriceTrendsPage() {
       const daysAgo = daysRange - 1 - index;
       const d = new Date(now);
       d.setDate(d.getDate() - daysAgo);
-      const dateLabel = d.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+      const locale = { en: "en-IN", kn: "kn-IN", hi: "hi-IN", ta: "ta-IN", te: "te-IN", mr: "mr-IN" }[s.lang];
+      const dateLabel = d.toLocaleDateString(locale, { month: "short", day: "numeric" });
 
       return {
         date: dateLabel,
@@ -97,7 +99,7 @@ function PriceTrendsPage() {
         [compMarket.names.en]: s2[index] ?? val1,
       };
     });
-  }, [crop, primaryMarket, compMarket, daysRange]);
+  }, [crop, primaryMarket, compMarket, daysRange, s.lang]);
 
   // Worksheet calculations
   const totalProductionCost = planAreaAcres * planCostPerAcre;
@@ -119,7 +121,7 @@ function PriceTrendsPage() {
               </h1>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Historical APMC modal price trajectories and evidence-grounded planning worksheets.
+              {t.trendIntro}
             </p>
           </div>
 
@@ -136,7 +138,7 @@ function PriceTrendsPage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {r} Days
+                {r} {t.daysUnit}
               </button>
             ))}
           </div>
@@ -146,7 +148,7 @@ function PriceTrendsPage() {
         <div className="rounded-2xl border bg-card p-4 shadow-2xs space-y-4">
           <div>
             <label className="text-xs font-semibold text-muted-foreground block mb-1">
-              Select Crop
+              {t.chooseCrop}
             </label>
             <CropPicker
               value={cropId}
@@ -159,7 +161,7 @@ function PriceTrendsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t">
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                Primary Market (Line 1)
+                {t.primaryMarketLine}
               </label>
               <select
                 value={primaryMarketId}
@@ -168,7 +170,7 @@ function PriceTrendsPage() {
               >
                 {MARKETS.filter((m) => m.kind === "mandi").map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.names.en} ({m.district}, {m.state})
+                    {m.names[s.lang] ?? m.names.en} ({m.district}, {m.state})
                   </option>
                 ))}
               </select>
@@ -176,7 +178,7 @@ function PriceTrendsPage() {
 
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                Comparison Market (Line 2)
+                {t.comparisonMarketLine}
               </label>
               <select
                 value={comparisonMarketId}
@@ -185,7 +187,7 @@ function PriceTrendsPage() {
               >
                 {MARKETS.filter((m) => m.kind === "mandi").map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.names.en} ({m.district}, {m.state})
+                    {m.names[s.lang] ?? m.names.en} ({m.district}, {m.state})
                   </option>
                 ))}
               </select>
@@ -198,14 +200,14 @@ function PriceTrendsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h2 className="font-display text-lg font-extrabold text-foreground">
-                Modal Price Trends (₹ / quintal)
+                {t.modalPriceTrends}
               </h2>
               <p className="text-xs text-muted-foreground">
-                Observed price movement over last {daysRange} days · Source: Agmarknet DEMO Records
+                {fmt(t.observedPriceHistory, { n: daysRange })}
               </p>
             </div>
             <span className="rounded-md bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase self-start">
-              Simulated DEMO Series
+              {t.simulatedDemoSeries}
             </span>
           </div>
 
@@ -229,6 +231,7 @@ function PriceTrendsPage() {
                 <Line
                   type="monotone"
                   dataKey={primaryMarket.names.en}
+                  name={primaryMarket.names[s.lang] ?? primaryMarket.names.en}
                   stroke="#16a34a"
                   strokeWidth={2.5}
                   dot={false}
@@ -237,6 +240,7 @@ function PriceTrendsPage() {
                 <Line
                   type="monotone"
                   dataKey={compMarket.names.en}
+                  name={compMarket.names[s.lang] ?? compMarket.names.en}
                   stroke="#d97706"
                   strokeWidth={2}
                   strokeDasharray="4 4"
@@ -254,13 +258,11 @@ function PriceTrendsPage() {
             <div className="flex items-center gap-2">
               <Sprout className="size-5 text-primary" />
               <h2 className="font-display text-xl font-extrabold text-foreground">
-                Crop Planning Worksheet
+                {t.cropPlanningWorksheet}
               </h2>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Historical prices alone are never sufficient for seasonal crop planning. Local soil
-              suitability, groundwater availability, pest cycles, input costs, and weather forecasts
-              must be evaluated before sowing.
+              {t.cautiousPlanningBody}
             </p>
           </div>
 
@@ -268,7 +270,7 @@ function PriceTrendsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 rounded-2xl bg-muted/30 p-3.5 text-xs">
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Planned Cultivation Area (Acres)
+                {t.plannedAreaAcres}
               </label>
               <input
                 type="number"
@@ -282,7 +284,7 @@ function PriceTrendsPage() {
 
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Anticipated Yield (Quintals / Acre)
+                {t.anticipatedYieldAcre}
               </label>
               <input
                 type="number"
@@ -295,7 +297,7 @@ function PriceTrendsPage() {
 
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Estimated Cost of Cultivation (₹ / Acre)
+                {t.estimatedCultivationCostAcre}
               </label>
               <input
                 type="number"
@@ -309,7 +311,7 @@ function PriceTrendsPage() {
 
             <div>
               <label className="font-semibold text-muted-foreground block mb-1">
-                Irrigation / Water Availability
+                {t.irrigationWaterAvailability}
               </label>
               <select
                 value={waterAvailability}
@@ -318,9 +320,9 @@ function PriceTrendsPage() {
                 }
                 className="h-9 w-full rounded-lg border bg-background px-2 text-xs font-semibold"
               >
-                <option value="adequate">Adequate (Borewell / Canal)</option>
-                <option value="moderate">Moderate (Intermittent)</option>
-                <option value="scarce">Scarce (Rainfed Only)</option>
+                <option value="adequate">{t.waterAdequate}</option>
+                <option value="moderate">{t.waterModerate}</option>
+                <option value="scarce">{t.waterScarce}</option>
               </select>
             </div>
           </div>
@@ -328,21 +330,21 @@ function PriceTrendsPage() {
           {/* Projected Estimates Output */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-xs">
             <div className="rounded-xl border bg-card p-3">
-              <span className="block text-[11px] text-muted-foreground">Total Expected Yield</span>
+              <span className="block text-[11px] text-muted-foreground">{t.totalExpectedYield}</span>
               <span className="text-base font-extrabold text-foreground">
-                {totalYieldQuintals} quintals
+                {totalYieldQuintals} {t.quintal}
               </span>
             </div>
 
             <div className="rounded-xl border bg-card p-3">
-              <span className="block text-[11px] text-muted-foreground">Total Production Cost</span>
+              <span className="block text-[11px] text-muted-foreground">{t.totalProductionCost}</span>
               <span className="text-base font-extrabold text-destructive">
                 {rupees(totalProductionCost)}
               </span>
             </div>
 
             <div className="rounded-xl border bg-card p-3">
-              <span className="block text-[11px] text-muted-foreground">Est. Gross Revenue</span>
+              <span className="block text-[11px] text-muted-foreground">{t.estimatedGrossRevenue}</span>
               <span className="text-base font-extrabold text-foreground">
                 {rupees(estimatedRevenue)}
               </span>
@@ -351,7 +353,7 @@ function PriceTrendsPage() {
             <div
               className={`rounded-xl border p-3 ${estimatedNetReturn >= 0 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200" : "bg-destructive/10 text-destructive"}`}
             >
-              <span className="block text-[11px]">Est. Return Over Cost</span>
+              <span className="block text-[11px]">{t.estimatedReturnOverCost}</span>
               <span className="text-base font-extrabold">
                 {estimatedNetReturn >= 0
                   ? `+${rupees(estimatedNetReturn)}`
@@ -364,13 +366,10 @@ function PriceTrendsPage() {
           <div className="rounded-2xl border border-border/80 bg-muted/20 p-3.5 text-xs text-muted-foreground space-y-1">
             <div className="flex items-center gap-1.5 font-bold text-foreground">
               <ShieldAlert className="size-4 text-primary" />
-              <span>Cautious Crop Planning Disclaimer</span>
+              <span>{t.cautiousPlanningTitle}</span>
             </div>
             <p className="leading-relaxed">
-              KisanSaathi does <strong>not guarantee profitability</strong> for any crop. Past
-              market prices do not predict future seasonal arrival volume or pest infestation risks.
-              Consult your local Taluk Agricultural Officer or Krishi Vigyan Kendra (KVK) for soil
-              testing and water suitability before making major seasonal cropping investments.
+              {t.cautiousPlanningBody}
             </p>
           </div>
         </section>

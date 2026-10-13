@@ -34,7 +34,7 @@ import {
   rupees,
 } from "@/lib/calc";
 import { CROPS, cropById, MARKETS, priceSeries, type CropId } from "@/lib/data";
-import { fmt } from "@/lib/i18n";
+import { fmt, locationLabel } from "@/lib/i18n";
 import { useSettings } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
@@ -115,12 +115,11 @@ function HomeDashboard() {
     const topName =
       marketHighlights.top.market.names[s.lang] ?? marketHighlights.top.market.names.en;
     const price = Math.round(marketHighlights.top.netPerQ);
-    return `KisanSaathi recommendation for ${selectedCrop.localizedNames[s.lang] ?? selectedCrop.name}: Best market is ${topName} yielding approximately ${price} rupees net per quintal after transport. ${
-      marketHighlights.spread > 0
-        ? `You can earn up to ${marketHighlights.spread} rupees more than selling at your nearest yard.`
-        : ""
-    }`;
-  }, [marketHighlights, selectedCrop, s.lang, t.empty]);
+    const summary = fmt(t.voiceBest, { m: topName, p: price });
+    return marketHighlights.spread > 0
+      ? `${summary} ${fmt(t.voiceExtra, { g: marketHighlights.spread })}`
+      : summary;
+  }, [marketHighlights, s.lang, t.voiceBest, t.voiceExtra]);
 
   if (!ready) {
     return (
@@ -148,8 +147,7 @@ function HomeDashboard() {
             </h1>
 
             <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed max-w-xl">
-              Compare mandi prices, calculate transport costs, find the highest net earning market,
-              and discover verified agricultural services.
+              {t.heroDescription || "Compare mandi prices, calculate transport costs, find the highest net earning market, and discover verified agricultural services."}
             </p>
 
             {/* Location & Crop Quick Badge */}
@@ -161,7 +159,9 @@ function HomeDashboard() {
               >
                 <MapPin className="size-3.5 text-amber-300" />
                 <span>
-                  {s.loc ? `${s.loc.village || s.loc.district}, ${s.loc.state}` : "Set Location"}
+                  {s.loc
+                    ? locationLabel(s.loc, t)
+                    : t.setLocation || "Set Location"}
                 </span>
               </button>
 
@@ -203,7 +203,7 @@ function HomeDashboard() {
                 {t.chooseCrop || "Select Produce"}
               </h2>
             </div>
-            <span className="text-xs text-muted-foreground">{CROPS.length} crops catalogued</span>
+            <span className="text-xs text-muted-foreground">{fmt(t.cropCount, { n: CROPS.length })}</span>
           </div>
 
           <CropPicker
@@ -220,22 +220,24 @@ function HomeDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1.5">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white uppercase tracking-wider">
-                  Top Recommended Market
+                  {t.topRecommendedMarket || "Top Recommended Market"}
                 </span>
                 <h3 className="font-display text-xl sm:text-2xl font-extrabold text-foreground">
                   {marketHighlights.top.market.names[s.lang] ??
                     marketHighlights.top.market.names.en}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Approx. {marketHighlights.top.dist} km road distance · Modal price: ₹
-                  {marketHighlights.top.price}/q
+                  {fmt(t.approxDistanceModalPrice, {
+                    distance: marketHighlights.top.dist,
+                    price: marketHighlights.top.price,
+                  })}
                 </p>
               </div>
 
               <div className="flex items-baseline gap-3 sm:text-right">
                 <div>
                   <span className="block text-xs font-semibold text-muted-foreground">
-                    Estimated Net / Quintal
+                    {t.estimatedNetPerQuintal}
                   </span>
                   <span className="font-display text-2xl sm:text-3xl font-extrabold text-emerald-700 dark:text-emerald-400">
                     ₹{Math.round(marketHighlights.top.netPerQ)}
@@ -244,7 +246,7 @@ function HomeDashboard() {
                 {marketHighlights.spread > 0 && (
                   <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/50 p-2 text-left">
                     <span className="block text-[10px] font-bold text-emerald-800 dark:text-emerald-200">
-                      Extra vs Nearest
+                      {t.extraVsNearest}
                     </span>
                     <span className="text-sm font-extrabold text-emerald-700 dark:text-emerald-300">
                       +{rupees(marketHighlights.spread)}/10q
@@ -257,13 +259,13 @@ function HomeDashboard() {
             <div className="mt-4 pt-3 border-t border-emerald-200/40 dark:border-emerald-800/30 flex flex-wrap items-center justify-between gap-2">
               <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                 <TrendingUp className="size-3.5 text-emerald-600" />
-                Updated with current APMC modal price and estimated road freight
+                {t.updatedPriceFreight}
               </span>
               <Link
                 to="/best-market"
                 className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
               >
-                <span>Compare all candidate mandis</span>
+                <span>{t.compareAllMandis || "Compare all candidate mandis"}</span>
                 <ArrowRight className="size-3.5" />
               </Link>
             </div>
@@ -274,9 +276,11 @@ function HomeDashboard() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-bold text-foreground">
-              Core Agricultural Tools & Services
+              {t.coreToolsServices || "Core Agricultural Tools & Services"}
             </h2>
-            <span className="text-xs text-muted-foreground">All features functional</span>
+            <span className="text-xs text-muted-foreground">
+              {t.allFeaturesFunctional || "All features functional"}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -293,8 +297,7 @@ function HomeDashboard() {
                   {t.mandiPrices || "KisanMandi Prices"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Search live minimum, maximum and modal rates across APMC yards with freshness
-                  indicators.
+                  {t.searchMinMaxModal}
                 </p>
               </div>
             </Link>
@@ -312,8 +315,7 @@ function HomeDashboard() {
                   {t.bestMarket || "Best Market Finder"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Rank mandis by true net proceeds: Price minus freight, APMC statutory fee, and
-                  loading.
+                  {t.rankNetProceedsDesc}
                 </p>
               </div>
             </Link>
@@ -331,8 +333,7 @@ function HomeDashboard() {
                   {t.whenToSell || "When to Sell"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Transparent 3-day and 7-day price trajectory and perishability storage
-                  constraints.
+                  {t.priceTrajectoryDesc}
                 </p>
               </div>
             </Link>
@@ -350,7 +351,7 @@ function HomeDashboard() {
                   {t.trends || "Price Trends & Planning"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-snug">
-                  60-day interactive price history charts and seasonal crop planning worksheets.
+                  {t.priceHistoryDesc}
                 </p>
               </div>
             </Link>
@@ -368,7 +369,7 @@ function HomeDashboard() {
                   {t.calculator || "Farming Profit Calculator"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Calculate cost of cultivation, break-even selling price, and profit margins.
+                  {t.cultivationCostDesc}
                 </p>
               </div>
             </Link>
@@ -386,7 +387,7 @@ function HomeDashboard() {
                   {t.buyers || "Direct Buyer Market"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Connect directly with verified FPOs, food processors and grocery aggregators.
+                  {t.buyerConnectDesc}
                 </p>
               </div>
             </Link>
@@ -404,7 +405,7 @@ function HomeDashboard() {
                   {t.fertilizer || "Organic Fertilizer & Manure"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Trade earthworm vermicompost, jeevamrutha and compost with batch dates.
+                  {t.fertilizerTradeDesc}
                 </p>
               </div>
             </Link>
@@ -422,7 +423,7 @@ function HomeDashboard() {
                   {t.workshops || "Training & Workshops"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Practical KVK and APMC sessions on market pricing, composting and grain safety.
+                  {t.workshopsDesc}
                 </p>
               </div>
             </Link>
@@ -440,7 +441,7 @@ function HomeDashboard() {
                   {t.transport || "Transport Coordination"}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Vehicle capacity matching and group pooling calculator to cut transit expenses.
+                  {t.transportPoolingDesc}
                 </p>
               </div>
             </Link>
@@ -453,15 +454,13 @@ function HomeDashboard() {
             <div className="space-y-2 max-w-xl">
               <div className="inline-flex items-center gap-1.5 rounded-md bg-amber-200/80 dark:bg-amber-900/60 px-2.5 py-0.5 text-xs font-bold text-amber-900 dark:text-amber-200">
                 <ShieldAlert className="size-3.5" />
-                <span>Research-Pilot Module · Evidence-Based</span>
+                <span>{t.researchPilotModule || "Research-Pilot Module · Evidence-Based"}</span>
               </div>
               <h2 className="font-display text-xl sm:text-2xl font-extrabold text-foreground">
-                Lantana Eco-Guard
+                {t.lantanaTitle}
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Learn • Research • Protect Stored Produce. Review verified studies from NCBI PMC
-                (PMC4571242 & PMC10819012) on <em>Lantana camara</em> bioactive volatiles,
-                transparent unvalidated research hypotheses, and standard safe grain storage rules.
+                {t.lantanaDescription}
               </p>
             </div>
 
@@ -470,7 +469,7 @@ function HomeDashboard() {
                 to="/lantana-guard"
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-amber-700 transition-colors"
               >
-                <span>Explore Eco-Guard</span>
+                <span>{t.exploreEcoGuard || "Explore Eco-Guard"}</span>
                 <ArrowRight className="size-4" />
               </Link>
             </div>

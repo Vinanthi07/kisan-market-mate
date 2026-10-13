@@ -25,6 +25,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Page } from "@/components/AppShell";
 import { DEMO_FERTILIZERS, type FertilizerListing } from "@/lib/data";
+import { fmt } from "@/lib/i18n";
 import { useSettings } from "@/lib/store";
 
 export const Route = createFileRoute("/fertilizer")({
@@ -136,9 +137,7 @@ function OrganicFertilizerPage() {
   const handleSendEnquiry = (e: React.FormEvent) => {
     e.preventDefault();
     if (!enquiryTarget) return;
-    setEnquirySuccessMsg(
-      `Order enquiry sent to ${enquiryTarget.sellerName} for ${enquiryTarget.title}.`,
-    );
+    setEnquirySuccessMsg(fmt(t.enquirySuccess, { name: enquiryTarget.sellerName }));
     setEnquiryTarget(null);
     setTimeout(() => setEnquirySuccessMsg(null), 3000);
   };
@@ -156,8 +155,7 @@ function OrganicFertilizerPage() {
               </h1>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Source verified vermicompost, cow dung manure, jeevamrutha and bio-fertilizers
-              directly from farmers and FPOs.
+              {t.fertilizerIntro}
             </p>
           </div>
 
@@ -167,7 +165,7 @@ function OrganicFertilizerPage() {
             className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors self-start sm:self-auto"
           >
             <Plus className="size-4" />
-            <span>List Organic Manure</span>
+            <span>{t.listOrganicManure}</span>
           </button>
         </div>
 
@@ -175,13 +173,10 @@ function OrganicFertilizerPage() {
         <div className="rounded-2xl border border-border/80 bg-muted/20 p-3.5 text-xs text-muted-foreground space-y-1">
           <div className="flex items-center gap-1.5 font-bold text-foreground">
             <ShieldAlert className="size-4 text-primary" />
-            <span>Product Quality & Certification Notice</span>
+            <span>{t.productQualityNotice}</span>
           </div>
           <p className="leading-relaxed">
-            Listings display farmer-reported preparation methods and batch dates. KisanSaathi does
-            not issue laboratory certifications or organic compliance stamps without authorized
-            testing lab reports. Always test on small plots and inspect moisture, maturity and
-            weed-seed presence before bulk application.
+            {t.productQualityNoticeBody}
           </p>
         </div>
 
@@ -199,7 +194,7 @@ function OrganicFertilizerPage() {
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search vermicompost, jeevamrutha, FYM, seller, or district..."
+                placeholder={t.fertilizerSearchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-10 w-full rounded-xl border bg-background pl-9 pr-3 text-xs focus:ring-2 focus:ring-primary"
@@ -208,11 +203,11 @@ function OrganicFertilizerPage() {
 
             <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs w-full sm:w-auto">
               {[
-                { id: "all", label: "All Products" },
-                { id: "vermicompost", label: "Vermicompost" },
-                { id: "farmyard_manure", label: "Pit Manure (FYM)" },
+                { id: "all", label: t.allProducts },
+                { id: "vermicompost", label: t.vermiInputs },
+                { id: "farmyard_manure", label: t.pitManure },
                 { id: "jeevamrutha", label: "Jeevamrutha" },
-                { id: "bio_fertilizer", label: "Bio-Fertilizer" },
+                { id: "bio_fertilizer", label: t.bioFertilizer },
               ].map((c) => (
                 <button
                   key={c.id}
@@ -260,25 +255,25 @@ function OrganicFertilizerPage() {
 
                 <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted/40 p-2.5 text-xs">
                   <div>
-                    <span className="text-[10px] text-muted-foreground block">Available Stock</span>
+                    <span className="text-[10px] text-muted-foreground block">{t.availableStock}</span>
                     <span className="font-extrabold text-foreground">
                       {item.quantityAvailable} {item.unit}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-muted-foreground block">Price</span>
+                    <span className="text-[10px] text-muted-foreground block">{t.price}</span>
                     <span className="font-extrabold text-primary">{item.priceUnit}</span>
                   </div>
                 </div>
 
                 <div className="space-y-1.5 text-xs text-muted-foreground">
                   <p>
-                    <strong className="text-foreground">Feedstock / Method:</strong>{" "}
+                    <strong className="text-foreground">{t.feedstockMethod}</strong>{" "}
                     {item.feedstockMethod}
                   </p>
                   <p>
-                    <strong className="text-foreground">Batch Date:</strong> {item.batchDate} ·{" "}
-                    <strong className="text-foreground">Packaging:</strong> {item.packaging}
+                    <strong className="text-foreground">{t.batchDate}</strong> {item.batchDate} ·{" "}
+                    <strong className="text-foreground">{t.packagingLabel}</strong> {item.packaging}
                   </p>
                   <p className="line-clamp-2">{item.description}</p>
                 </div>
@@ -286,14 +281,14 @@ function OrganicFertilizerPage() {
 
               <div className="pt-3 border-t flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground capitalize">
-                  Delivery: {item.deliveryOption.replace("_", " ")}
+                  {t.deliveryLabel} {item.deliveryOption.replace("_", " ")}
                 </span>
                 <button
                   type="button"
                   onClick={() => setEnquiryTarget(item)}
                   className="rounded-xl bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Request Quote / Enquiry
+                  {t.requestQuote}
                 </button>
               </div>
             </div>
@@ -306,7 +301,7 @@ function OrganicFertilizerPage() {
             <div className="flex items-center gap-2">
               <Recycle className="size-5 text-lime-700 dark:text-lime-400" />
               <h2 className="font-display text-lg font-extrabold text-foreground">
-                Responsible Organic Waste Management & Composting
+                {t.organicWasteTitle}
               </h2>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -359,7 +354,7 @@ function OrganicFertilizerPage() {
             <div className="w-full max-w-lg rounded-3xl border bg-card p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b pb-3">
                 <h3 className="font-display text-base font-bold text-foreground">
-                  List Organic Fertilizer / Manure Product
+                  {t.listOrganicManure}
                 </h3>
                 <button
                   type="button"
@@ -373,12 +368,12 @@ function OrganicFertilizerPage() {
               <form onSubmit={handleCreateListing} className="space-y-3.5 text-xs">
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Product Title *
+                    {t.productTitle} *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Matured Eudrilus Earthworm Vermicompost"
+                    placeholder={t.fertilizer}
                     value={prodTitle}
                     onChange={(e) => setProdTitle(e.target.value)}
                     className="h-10 w-full rounded-xl border bg-background px-3 font-bold"
@@ -388,7 +383,7 @@ function OrganicFertilizerPage() {
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Seller / FPO Name *
+                      {t.farmerNameLabel} *
                     </label>
                     <input
                       type="text"
@@ -401,7 +396,7 @@ function OrganicFertilizerPage() {
 
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Category *
+                      {t.allProducts} *
                     </label>
                     <select
                       value={prodCategory}
@@ -410,22 +405,22 @@ function OrganicFertilizerPage() {
                       }
                       className="h-10 w-full rounded-xl border bg-background px-3 font-semibold"
                     >
-                      <option value="vermicompost">Vermicompost</option>
-                      <option value="farmyard_manure">Pit Manure (FYM)</option>
+                      <option value="vermicompost">{t.vermiInputs}</option>
+                      <option value="farmyard_manure">{t.pitManure}</option>
                       <option value="jeevamrutha">Jeevamrutha</option>
-                      <option value="bio_fertilizer">Bio-Fertilizer</option>
+                      <option value="bio_fertilizer">{t.bioFertilizer}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Feedstock & Preparation Method *
+                    {t.feedstockMethod} *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Desi cattle dung, sugarcane bagasse fermented 60 days"
+                    placeholder={t.feedstockMethod}
                     value={prodFeedstock}
                     onChange={(e) => setProdFeedstock(e.target.value)}
                     className="h-10 w-full rounded-xl border bg-background px-3"
@@ -435,7 +430,7 @@ function OrganicFertilizerPage() {
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Available Qty
+                      {t.availableStock}
                     </label>
                     <input
                       type="number"
@@ -447,7 +442,7 @@ function OrganicFertilizerPage() {
                   </div>
 
                   <div>
-                    <label className="font-semibold text-muted-foreground block mb-1">Unit</label>
+                    <label className="font-semibold text-muted-foreground block mb-1">{t.quintal}</label>
                     <select
                       value={prodUnit}
                       onChange={(e) =>
@@ -455,16 +450,16 @@ function OrganicFertilizerPage() {
                       }
                       className="h-10 w-full rounded-xl border bg-background px-2 font-semibold"
                     >
-                      <option value="quintal">Quintal</option>
-                      <option value="tonne">Tonne</option>
+                      <option value="quintal">{t.quintal}</option>
+                      <option value="tonne">{t.tonne}</option>
                       <option value="kg">kg</option>
-                      <option value="litre">Litre</option>
+                      <option value="litre">{t.litre}</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Price (₹ / Unit)
+                      {t.price} (₹ / {t.quintal})
                     </label>
                     <input
                       type="number"
@@ -479,7 +474,7 @@ function OrganicFertilizerPage() {
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Location / Taluk
+                      {t.location} / {t.talukSubdistrict}
                     </label>
                     <input
                       type="text"
@@ -491,7 +486,7 @@ function OrganicFertilizerPage() {
 
                   <div>
                     <label className="font-semibold text-muted-foreground block mb-1">
-                      Batch Preparation Date
+                      {t.batchDate}
                     </label>
                     <input
                       type="date"
@@ -504,12 +499,12 @@ function OrganicFertilizerPage() {
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Packaging & Delivery
+                    {t.packagingLabel} / {t.deliveryLabel}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       type="text"
-                      placeholder="e.g. 50 kg HDPE bags"
+                      placeholder={t.packagingLabel}
                       value={prodPackaging}
                       onChange={(e) => setProdPackaging(e.target.value)}
                       className="h-10 rounded-xl border bg-background px-3"
@@ -523,16 +518,16 @@ function OrganicFertilizerPage() {
                       }
                       className="h-10 rounded-xl border bg-background px-2 font-semibold"
                     >
-                      <option value="transporter_share">Transporter Share</option>
-                      <option value="self_pickup">Self Pickup</option>
-                      <option value="seller_delivery">Seller Delivery</option>
+                      <option value="transporter_share">{t.transport}</option>
+                      <option value="self_pickup">{t.changeLocationShort}</option>
+                      <option value="seller_delivery">{t.deliveryLabel}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Product Description
+                    {t.about}
                   </label>
                   <textarea
                     rows={2}
@@ -547,7 +542,7 @@ function OrganicFertilizerPage() {
                   className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90"
                 >
                   <Check className="size-4" />
-                  <span>Publish Fertilizer Listing</span>
+                  <span>{t.post}</span>
                 </button>
               </form>
             </div>
@@ -561,10 +556,10 @@ function OrganicFertilizerPage() {
               <div className="flex items-center justify-between border-b pb-3">
                 <div>
                   <h3 className="font-display text-base font-bold text-foreground">
-                    Enquire: {enquiryTarget.title}
+                    {t.enquire}: {enquiryTarget.title}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Seller: {enquiryTarget.sellerName}
+                    {t.farmerNameLabel}: {enquiryTarget.sellerName}
                   </p>
                 </div>
                 <button
@@ -579,31 +574,31 @@ function OrganicFertilizerPage() {
               <form onSubmit={handleSendEnquiry} className="space-y-3 text-xs">
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Your Name
+                    {t.yourName}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Farmer / FPO representative"
+                    placeholder={t.farmerNameLabel}
                     className="h-10 w-full rounded-xl border bg-background px-3"
                   />
                 </div>
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Contact Phone Number
+                    {t.phoneLabel}
                   </label>
                   <input
                     type="tel"
                     required
-                    placeholder="10-digit mobile"
+                    placeholder={t.mobilePlaceholder}
                     className="h-10 w-full rounded-xl border bg-background px-3 font-bold"
                   />
                 </div>
 
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">
-                    Required Quantity ({enquiryTarget.unit})
+                    {t.quantity} ({enquiryTarget.unit})
                   </label>
                   <input
                     type="number"
@@ -618,7 +613,7 @@ function OrganicFertilizerPage() {
                   className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90"
                 >
                   <Send className="size-4" />
-                  <span>Send Enquiry to Seller</span>
+                  <span>{t.submitEnquiry}</span>
                 </button>
               </form>
             </div>
